@@ -17,6 +17,9 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
+            <Link to="/plan-trip" className="text-foreground hover:text-accent transition-colors">
+              Plan Trip
+            </Link>
             <a href="#features" className="text-foreground hover:text-accent transition-colors">
               Features
             </a>
@@ -51,6 +54,13 @@ const Navbar = () => {
         {isOpen && (
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-4">
+              <Link
+                to="/plan-trip"
+                className="text-foreground hover:text-accent transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                Plan Trip
+              </Link>
               <a
                 href="#features"
                 className="text-foreground hover:text-accent transition-colors"

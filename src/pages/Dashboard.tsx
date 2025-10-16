@@ -94,7 +94,11 @@ const Dashboard = () => {
         <Calendar className="mr-2 h-4 w-4" />
         My Trips
       </Button>
-      <Button variant="ghost" className="w-full justify-start">
+      <Button 
+        variant="ghost" 
+        className="w-full justify-start"
+        onClick={() => navigate('/plan-trip')}
+      >
         <Sparkles className="mr-2 h-4 w-4" />
         AI Planner
       </Button>
@@ -253,7 +257,10 @@ const Dashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full sm:w-auto">
+                <Button 
+                  className="w-full sm:w-auto"
+                  onClick={() => navigate('/plan-trip')}
+                >
                   Start Planning
                 </Button>
               </CardContent>
