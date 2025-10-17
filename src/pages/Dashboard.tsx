@@ -1,273 +1,237 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Plane, 
-  Calendar, 
-  Cloud, 
-  Sparkles, 
-  MapPin, 
-  TrendingUp,
-  LogOut,
-  Menu
-} from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Sparkles, MapPin, Calendar, Edit, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import DashboardNav from "@/components/DashboardNav";
+import { Badge } from "@/components/ui/badge";
 
-interface Profile {
-  full_name: string | null;
-  email: string;
-  interests: string[] | null;
-  budget_range: string | null;
-  avatar_url: string | null;
+interface Trip {
+  id: string;
+  title: string;
+  destination: string;
+  start_date: string;
+  end_date: string;
+  trip_type: string;
+  planner_mode: string | null;
+  budget_inr: number | null;
 }
 
 const Dashboard = () => {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     checkAuth();
-  }, []);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate("/login");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
 
-    await loadProfile(session.user.id);
+    await loadTrips();
+    setLoading(false);
   };
 
-  const loadProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+  const loadTrips = async () => {
+    const { data, error } = await supabase
+      .from("trips")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      if (error) throw error;
-
-      if (!data.onboarding_completed) {
-        navigate('/onboarding');
-        return;
-      }
-
-      setProfile(data);
-    } catch (error: any) {
+    if (error) {
+      console.error("Error loading trips:", error);
       toast({
-        title: 'Error loading profile',
-        description: error.message,
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load your trips",
+        variant: "destructive"
       });
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    setTrips(data || []);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/login');
-  };
+  const deleteTrip = async (tripId: string) => {
+    const { error } = await supabase
+      .from("trips")
+      .delete()
+      .eq("id", tripId);
 
-  const getInitials = (name: string | null) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete trip",
+        variant: "destructive"
+      });
+      return;
+    }
 
-  const NavContent = () => (
-    <nav className="space-y-1">
-      <Button variant="ghost" className="w-full justify-start">
-        <MapPin className="mr-2 h-4 w-4" />
-        Discover
-      </Button>
-      <Button variant="ghost" className="w-full justify-start">
-        <Calendar className="mr-2 h-4 w-4" />
-        My Trips
-      </Button>
-      <Button 
-        variant="ghost" 
-        className="w-full justify-start"
-        onClick={() => navigate('/plan-trip')}
-      >
-        <Sparkles className="mr-2 h-4 w-4" />
-        AI Planner
-      </Button>
-      <Button variant="ghost" className="w-full justify-start">
-        <TrendingUp className="mr-2 h-4 w-4" />
-        Trending
-      </Button>
-    </nav>
-  );
+    toast({
+      title: "Success",
+      description: "Trip deleted successfully"
+    });
+    
+    loadTrips();
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Plane className="h-8 w-8 animate-pulse text-primary" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-center">
+          <MapPin className="h-12 w-12 mx-auto mb-4 text-primary animate-bounce" />
+          <p className="text-muted-foreground">Loading your trips...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top Navigation */}
-      <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-64">
-                <div className="py-4">
-                  <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-                    <Plane className="h-5 w-5 text-primary" />
-                    Travexa
-                  </h2>
-                  <NavContent />
-                </div>
-              </SheetContent>
-            </Sheet>
-            
-            <h1 className="text-xl font-bold flex items-center gap-2">
-              <Plane className="h-6 w-6 text-primary" />
-              <span className="hidden sm:inline">Travexa</span>
-            </h1>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <Avatar className="cursor-pointer" onClick={() => navigate('/profile')}>
-              <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary/10 text-primary">
-                {getInitials(profile?.full_name)}
-              </AvatarFallback>
-            </Avatar>
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
-              <LogOut className="h-5 w-5" />
+      <DashboardNav />
+
+      <main className="container px-4 py-8">
+        {/* Welcome Banner */}
+        <div 
+          className="relative rounded-lg overflow-hidden mb-8 h-64 bg-cover bg-center"
+          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80')` }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30" />
+          <div className="relative h-full flex flex-col justify-center px-8 text-white">
+            <h1 className="text-4xl font-bold mb-2">Welcome to Travexa!</h1>
+            <p className="text-lg mb-4">Connect. Plan. Explore.</p>
+            <Button size="lg" className="w-fit" onClick={() => navigate('/plan-trip')}>
+              <Sparkles className="mr-2 h-5 w-5" />
+              Plan Your Trip
             </Button>
           </div>
         </div>
-      </header>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex gap-6">
-          {/* Sidebar - Desktop */}
-          <aside className="hidden md:block w-64 space-y-6">
+        {/* AI Trip Planner Section */}
+        <Card className="mb-8 bg-gradient-to-br from-primary/10 to-accent/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-6 w-6" />
+              AI Travel Planner
+            </CardTitle>
+            <CardDescription>
+              Choose your planning mode and let AI create your perfect itinerary
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              size="lg"
+              onClick={() => navigate('/plan-trip')}
+            >
+              Start AI Planning
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Manual Plan Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Manual Trip Planning</CardTitle>
+            <CardDescription>
+              Create and manage your trips manually with full control
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/create-trip')}
+            >
+              Create New Trip
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Saved Trips */}
+        <div>
+          <h2 className="text-2xl font-bold mb-6">Your Trips</h2>
+          
+          {trips.length === 0 ? (
             <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Navigation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <NavContent />
-              </CardContent>
-            </Card>
-          </aside>
-
-          {/* Main Content */}
-          <main className="flex-1 space-y-6">
-            {/* Welcome Card */}
-            <Card className="bg-gradient-to-br from-primary/10 to-accent/10 border-none">
-              <CardContent className="pt-6">
-                <h2 className="text-2xl font-bold mb-2">
-                  Welcome back, {profile?.full_name?.split(' ')[0] || 'Traveler'}!
-                </h2>
-                <p className="text-muted-foreground">
-                  Ready for your next adventure?
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground text-center mb-4">
+                  No trips yet. Start planning your first adventure!
                 </p>
-              </CardContent>
-            </Card>
-
-            {/* Quick Stats */}
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Upcoming Trips</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">No trips planned yet</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Weather</CardTitle>
-                  <Cloud className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">72°F</div>
-                  <p className="text-xs text-muted-foreground">Perfect travel weather</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">AI Recommendations</CardTitle>
-                  <Sparkles className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">12</div>
-                  <p className="text-xs text-muted-foreground">Personalized for you</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Your Interests */}
-            {profile?.interests && profile.interests.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Interests</CardTitle>
-                  <CardDescription>
-                    Destinations matching your preferences
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {profile.interests.map((interest) => (
-                      <Badge key={interest} variant="secondary">
-                        {interest}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* AI Planner CTA */}
-            <Card className="bg-gradient-to-br from-secondary/10 to-primary/10 border-none">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5" />
-                  AI Travel Planner
-                </CardTitle>
-                <CardDescription>
-                  Let AI create a personalized itinerary based on your preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  className="w-full sm:w-auto"
-                  onClick={() => navigate('/plan-trip')}
-                >
-                  Start Planning
+                <Button onClick={() => navigate('/plan-trip')}>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Plan Your First Trip
                 </Button>
               </CardContent>
             </Card>
-          </main>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {trips.map((trip) => (
+                <Card key={trip.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex justify-between items-start mb-2">
+                      <CardTitle className="text-lg">{trip.title}</CardTitle>
+                      <div className="flex gap-2">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => navigate(`/trip/${trip.id}`)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => deleteTrip(trip.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <CardDescription className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {trip.destination}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        {new Date(trip.start_date).toLocaleDateString()} - {new Date(trip.end_date).toLocaleDateString()}
+                      </div>
+                      {trip.budget_inr && (
+                        <div className="font-semibold text-primary">
+                          ₹{trip.budget_inr.toLocaleString('en-IN')}
+                        </div>
+                      )}
+                      {trip.planner_mode && (
+                        <Badge variant="secondary" className="capitalize">
+                          {trip.planner_mode} Mode
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      </main>
     </div>
   );
 };

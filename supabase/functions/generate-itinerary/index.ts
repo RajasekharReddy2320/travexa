@@ -11,56 +11,37 @@ serve(async (req) => {
   }
 
   try {
-    const { destination, startDate, endDate, budget, interests } = await req.json();
-    console.log('Generating itinerary for:', { destination, startDate, endDate, budget, interests });
+    const { destination, startDate, endDate, budgetINR, groupSize, interests, plannerMode } = await req.json();
+    
+    console.log('Generating itinerary for:', { destination, startDate, endDate, budgetINR, groupSize, interests, plannerMode });
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const prompt = `Create a detailed travel itinerary for the following trip:
+    // Construct system prompt based on planner mode
+    let systemPrompt = "You are a helpful travel planning assistant that creates detailed itineraries.";
+    
+    if (plannerMode === 'comfort') {
+      systemPrompt += " Focus on premium experiences, relaxation, stress-free travel, luxury accommodations, and comfortable transportation. Prioritize quality over quantity.";
+    } else if (plannerMode === 'time') {
+      systemPrompt += " Optimize for efficient scheduling, short travel times between locations, and maximum experiences per day. Create a packed but realistic itinerary.";
+    } else if (plannerMode === 'budget') {
+      systemPrompt += " Focus on cost-effective options, budget accommodations, free or cheap activities, local transportation, and money-saving tips.";
+    }
+    
+    systemPrompt += " Always provide costs in INR (Indian Rupees). Format your response as JSON with: overview, dailyPlan (array of {day, activities}), estimatedCostINR, and tips.";
+
+    const prompt = `Create a detailed travel itinerary for:
 - Destination: ${destination}
 - Dates: ${startDate} to ${endDate}
-- Budget: ${budget}
+- Budget: ${budgetINR ? `₹${budgetINR}` : 'Flexible'}
+- Group Size: ${groupSize} ${groupSize === 1 ? 'person' : 'people'}
 - Interests: ${interests.join(', ')}
+- Planner Mode: ${plannerMode}
 
-Please provide a day-by-day itinerary with:
-1. Morning, afternoon, and evening activities
-2. Recommended restaurants for each meal
-3. Estimated costs for each activity
-4. Transportation tips between locations
-5. Cultural tips and must-see attractions
-
-Format the response as a structured JSON with this schema:
-{
-  "days": [
-    {
-      "day": 1,
-      "date": "YYYY-MM-DD",
-      "activities": [
-        {
-          "time": "Morning/Afternoon/Evening",
-          "title": "Activity name",
-          "description": "Detailed description",
-          "cost": "Estimated cost",
-          "location": "Specific location",
-          "duration": "Duration in hours"
-        }
-      ],
-      "meals": [
-        {
-          "type": "Breakfast/Lunch/Dinner",
-          "restaurant": "Restaurant name",
-          "cuisine": "Type of cuisine",
-          "cost": "Estimated cost"
-        }
-      ]
-    }
-  ],
-  "totalEstimatedCost": "Total cost for the trip",
-  "tips": ["Cultural tip 1", "Cultural tip 2", "..."]
-}`;
+Provide a day-by-day breakdown with activities, estimated costs in INR, and travel tips. Format as valid JSON only.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -71,13 +52,9 @@ Format the response as a structured JSON with this schema:
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are an expert travel planner. Provide detailed, practical itineraries in valid JSON format. Always respond with properly formatted JSON only, no markdown or additional text.'
-          },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
       }),
     });
 

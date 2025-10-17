@@ -14,39 +14,141 @@ export type Database = {
   }
   public: {
     Tables: {
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          read: boolean | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          read?: boolean | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          read?: boolean | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          age: number | null
           avatar_url: string | null
+          bio: string | null
           budget_range: string | null
           created_at: string | null
           email: string
           full_name: string | null
+          gender: string | null
+          home_location: string | null
           id: string
           interests: string[] | null
+          languages_spoken: string[] | null
           onboarding_completed: boolean | null
+          phone: string | null
+          travel_preferences: string[] | null
           updated_at: string | null
         }
         Insert: {
+          age?: number | null
           avatar_url?: string | null
+          bio?: string | null
           budget_range?: string | null
           created_at?: string | null
           email: string
           full_name?: string | null
+          gender?: string | null
+          home_location?: string | null
           id: string
           interests?: string[] | null
+          languages_spoken?: string[] | null
           onboarding_completed?: boolean | null
+          phone?: string | null
+          travel_preferences?: string[] | null
           updated_at?: string | null
         }
         Update: {
+          age?: number | null
           avatar_url?: string | null
+          bio?: string | null
           budget_range?: string | null
           created_at?: string | null
           email?: string
           full_name?: string | null
+          gender?: string | null
+          home_location?: string | null
           id?: string
           interests?: string[] | null
+          languages_spoken?: string[] | null
           onboarding_completed?: boolean | null
+          phone?: string | null
+          travel_preferences?: string[] | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      trips: {
+        Row: {
+          budget_inr: number | null
+          created_at: string
+          destination: string
+          end_date: string
+          group_size: number | null
+          id: string
+          interests: string[] | null
+          itinerary: Json | null
+          notes: string | null
+          planner_mode: string | null
+          start_date: string
+          title: string
+          trip_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_inr?: number | null
+          created_at?: string
+          destination: string
+          end_date: string
+          group_size?: number | null
+          id?: string
+          interests?: string[] | null
+          itinerary?: Json | null
+          notes?: string | null
+          planner_mode?: string | null
+          start_date: string
+          title: string
+          trip_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_inr?: number | null
+          created_at?: string
+          destination?: string
+          end_date?: string
+          group_size?: number | null
+          id?: string
+          interests?: string[] | null
+          itinerary?: Json | null
+          notes?: string | null
+          planner_mode?: string | null
+          start_date?: string
+          title?: string
+          trip_type?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
