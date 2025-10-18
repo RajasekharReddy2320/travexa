@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,9 @@ interface Profile {
   bio: string | null;
   age: number | null;
   gender: string | null;
+  date_of_birth: string | null;
+  country: string | null;
+  state: string | null;
   home_location: string | null;
   languages_spoken: string[] | null;
   interests: string[] | null;
@@ -29,10 +32,15 @@ interface Profile {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { userId } = useParams();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isOwnProfile, setIsOwnProfile] = useState(true);
+  const [likedTrips, setLikedTrips] = useState<any[]>([]);
+  const [bucketList, setBucketList] = useState<any[]>([]);
+  const [userTrips, setUserTrips] = useState<any[]>([]);
 
   useEffect(() => {
     checkAuth();
@@ -46,17 +54,17 @@ const Profile = () => {
       return;
     }
 
-    loadProfile();
+    const targetUserId = userId || session.user.id;
+    setIsOwnProfile(!userId || userId === session.user.id);
+    await loadProfile(targetUserId);
+    await loadUserActivity(targetUserId);
   };
 
-  const loadProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
+  const loadProfile = async (targetUserId: string) => {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", user.id)
+      .eq("id", targetUserId)
       .single();
 
     if (error) {
@@ -66,6 +74,45 @@ const Profile = () => {
 
     setProfile(data);
     setLoading(false);
+  };
+
+  const loadUserActivity = async (targetUserId: string) => {
+    // Load liked trips
+    const { data: likes } = await supabase
+      .from("trip_likes")
+      .select(`
+        trip_id,
+        trips:trip_id (*)
+      `)
+      .eq("user_id", targetUserId);
+
+    if (likes) {
+      setLikedTrips(likes.map(l => l.trips).filter(Boolean));
+    }
+
+    // Load bucket list
+    const { data: bucket } = await supabase
+      .from("bucket_list")
+      .select(`
+        trip_id,
+        trips:trip_id (*)
+      `)
+      .eq("user_id", targetUserId);
+
+    if (bucket) {
+      setBucketList(bucket.map(b => b.trips).filter(Boolean));
+    }
+
+    // Load user's trips
+    const { data: trips } = await supabase
+      .from("trips")
+      .select("*")
+      .eq("user_id", targetUserId)
+      .order("created_at", { ascending: false });
+
+    if (trips) {
+      setUserTrips(trips);
+    }
   };
 
   const handleSave = async () => {
@@ -79,6 +126,9 @@ const Profile = () => {
         bio: profile.bio,
         age: profile.age,
         gender: profile.gender,
+        date_of_birth: profile.date_of_birth,
+        country: profile.country,
+        state: profile.state,
         home_location: profile.home_location,
         languages_spoken: profile.languages_spoken,
         interests: profile.interests,
@@ -136,11 +186,13 @@ const Profile = () => {
 
       <main className="container px-4 py-8 max-w-4xl">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Profile</h1>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
+          <h1 className="text-3xl font-bold">{isOwnProfile ? "My Profile" : "Profile"}</h1>
+          {isOwnProfile && (
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          )}
         </div>
 
         {/* Profile Header */}
@@ -164,9 +216,11 @@ const Profile = () => {
                   </div>
                 )}
               </div>
-              <Button onClick={() => setEditing(!editing)}>
-                {editing ? "Cancel" : "Edit Profile"}
-              </Button>
+              {isOwnProfile && (
+                <Button onClick={() => setEditing(!editing)}>
+                  {editing ? "Cancel" : "Edit Profile"}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -237,6 +291,41 @@ const Profile = () => {
             </div>
 
             <div>
+              <Label htmlFor="dob">Date of Birth</Label>
+              <Input
+                id="dob"
+                type="date"
+                value={profile.date_of_birth || ""}
+                onChange={(e) => setProfile({ ...profile, date_of_birth: e.target.value })}
+                disabled={!editing}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="country">Country</Label>
+                <Input
+                  id="country"
+                  value={profile.country || ""}
+                  onChange={(e) => setProfile({ ...profile, country: e.target.value })}
+                  disabled={!editing}
+                  placeholder="Add country"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="state">State</Label>
+                <Input
+                  id="state"
+                  value={profile.state || ""}
+                  onChange={(e) => setProfile({ ...profile, state: e.target.value })}
+                  disabled={!editing}
+                  placeholder="Add state"
+                />
+              </div>
+            </div>
+
+            <div>
               <Label htmlFor="home_location">Home Location</Label>
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -301,7 +390,7 @@ const Profile = () => {
         </Card>
 
         {/* Travel Preferences */}
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle>Travel Preferences</CardTitle>
           </CardHeader>
@@ -315,6 +404,65 @@ const Profile = () => {
             ) : (
               <p className="text-muted-foreground text-sm">No preferences added yet</p>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Activity Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Your Activity</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="font-semibold mb-2">Liked Trips ({likedTrips.length})</h3>
+              {likedTrips.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {likedTrips.slice(0, 4).map((trip: any) => (
+                    <Card key={trip.id} className="p-3">
+                      <p className="font-medium text-sm truncate">{trip.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{trip.destination}</p>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No liked trips yet</p>
+              )}
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Bucket List ({bucketList.length})</h3>
+              {bucketList.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {bucketList.slice(0, 4).map((trip: any) => (
+                    <Card key={trip.id} className="p-3">
+                      <p className="font-medium text-sm truncate">{trip.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{trip.destination}</p>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No saved trips yet</p>
+              )}
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Your Trips ({userTrips.length})</h3>
+              {userTrips.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {userTrips.slice(0, 4).map((trip: any) => (
+                    <Card key={trip.id} className="p-3">
+                      <p className="font-medium text-sm truncate">{trip.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{trip.destination}</p>
+                      <Badge variant={trip.is_public ? "default" : "secondary"} className="text-xs mt-1">
+                        {trip.is_public ? "Public" : "Private"}
+                      </Badge>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No trips created yet</p>
+              )}
+            </div>
           </CardContent>
         </Card>
       </main>

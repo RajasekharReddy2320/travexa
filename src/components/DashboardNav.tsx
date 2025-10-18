@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Search, MessageSquare, User, Plane } from "lucide-react";
+import { Search, MessageSquare, User, Plane, Compass } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
@@ -44,6 +44,18 @@ const DashboardNav = () => {
           >
             <Plane className="h-4 w-4" />
             <span className="hidden sm:inline-block">Travexa</span>
+          </Link>
+
+          <Link
+            to="/wanderlust"
+            className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+              isActive("/wanderlust")
+                ? "bg-accent text-accent-foreground"
+                : "hover:bg-accent/50"
+            }`}
+          >
+            <Compass className="h-4 w-4" />
+            <span className="hidden sm:inline-block">Wanderlust</span>
           </Link>
 
           <Link

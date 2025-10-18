@@ -13,6 +13,7 @@ import Book from "./pages/Book";
 import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
 import CreateTrip from "./pages/CreateTrip";
+import Wanderlust from "./pages/Wanderlust";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,7 +32,9 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/plan-trip" element={<PlanTrip />} />
           <Route path="/create-trip" element={<CreateTrip />} />
+          <Route path="/wanderlust" element={<Wanderlust />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/book" element={<Book />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      bucket_list: {
+        Row: {
+          created_at: string
+          id: string
+          trip_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          trip_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          trip_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bucket_list_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -47,7 +76,9 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           budget_range: string | null
+          country: string | null
           created_at: string | null
+          date_of_birth: string | null
           email: string
           full_name: string | null
           gender: string | null
@@ -57,6 +88,7 @@ export type Database = {
           languages_spoken: string[] | null
           onboarding_completed: boolean | null
           phone: string | null
+          state: string | null
           travel_preferences: string[] | null
           updated_at: string | null
         }
@@ -65,7 +97,9 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           budget_range?: string | null
+          country?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           email: string
           full_name?: string | null
           gender?: string | null
@@ -75,6 +109,7 @@ export type Database = {
           languages_spoken?: string[] | null
           onboarding_completed?: boolean | null
           phone?: string | null
+          state?: string | null
           travel_preferences?: string[] | null
           updated_at?: string | null
         }
@@ -83,7 +118,9 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           budget_range?: string | null
+          country?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           email?: string
           full_name?: string | null
           gender?: string | null
@@ -93,10 +130,40 @@ export type Database = {
           languages_spoken?: string[] | null
           onboarding_completed?: boolean | null
           phone?: string | null
+          state?: string | null
           travel_preferences?: string[] | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      trip_likes: {
+        Row: {
+          created_at: string
+          id: string
+          trip_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          trip_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          trip_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_likes_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trips: {
         Row: {
@@ -106,8 +173,11 @@ export type Database = {
           end_date: string
           group_size: number | null
           id: string
+          image_url: string | null
           interests: string[] | null
+          is_public: boolean | null
           itinerary: Json | null
+          likes_count: number | null
           notes: string | null
           planner_mode: string | null
           start_date: string
@@ -123,8 +193,11 @@ export type Database = {
           end_date: string
           group_size?: number | null
           id?: string
+          image_url?: string | null
           interests?: string[] | null
+          is_public?: boolean | null
           itinerary?: Json | null
+          likes_count?: number | null
           notes?: string | null
           planner_mode?: string | null
           start_date: string
@@ -140,8 +213,11 @@ export type Database = {
           end_date?: string
           group_size?: number | null
           id?: string
+          image_url?: string | null
           interests?: string[] | null
+          is_public?: boolean | null
           itinerary?: Json | null
+          likes_count?: number | null
           notes?: string | null
           planner_mode?: string | null
           start_date?: string
@@ -149,6 +225,27 @@ export type Database = {
           trip_type?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
         }
         Relationships: []
       }

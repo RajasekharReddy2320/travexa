@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, MapPin, Calendar, Edit, Trash2 } from "lucide-react";
+import { Sparkles, MapPin, Calendar, Edit, Trash2, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import DashboardNav from "@/components/DashboardNav";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ interface Trip {
   trip_type: string;
   planner_mode: string | null;
   budget_inr: number | null;
+  is_public: boolean | null;
 }
 
 const Dashboard = () => {
@@ -88,6 +89,29 @@ const Dashboard = () => {
       description: "Trip deleted successfully"
     });
     
+    loadTrips();
+  };
+
+  const toggleTripVisibility = async (tripId: string, isPublic: boolean) => {
+    const { error } = await supabase
+      .from("trips")
+      .update({ is_public: !isPublic })
+      .eq("id", tripId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update trip visibility",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: `Trip is now ${!isPublic ? "public" : "private"}`
+    });
+
     loadTrips();
   };
 
@@ -187,6 +211,14 @@ const Dashboard = () => {
                     <div className="flex justify-between items-start mb-2">
                       <CardTitle className="text-lg">{trip.title}</CardTitle>
                       <div className="flex gap-2">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => toggleTripVisibility(trip.id, trip.is_public || false)}
+                          title={trip.is_public ? "Make private" : "Make public"}
+                        >
+                          {trip.is_public ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
                         <Button
                           size="icon"
                           variant="ghost"
