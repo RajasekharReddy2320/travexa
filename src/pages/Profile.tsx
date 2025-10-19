@@ -65,14 +65,64 @@ const Profile = () => {
       .from("profiles")
       .select("*")
       .eq("id", targetUserId)
-      .single();
+      .maybeSingle();
 
     if (error) {
-      console.error("Error loading profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load profile",
+        variant: "destructive"
+      });
+      setLoading(false);
       return;
     }
 
-    setProfile(data);
+    // If profile doesn't exist, create one
+    if (!data && isOwnProfile) {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const newProfile = {
+          id: user.id,
+          email: user.email || "",
+          full_name: user.user_metadata?.full_name || "",
+          phone: null,
+          bio: null,
+          age: null,
+          gender: null,
+          date_of_birth: null,
+          country: null,
+          state: null,
+          home_location: null,
+          languages_spoken: [],
+          interests: [],
+          travel_preferences: [],
+          avatar_url: null
+        };
+
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert(newProfile);
+
+        if (insertError) {
+          toast({
+            title: "Error",
+            description: "Failed to create profile",
+            variant: "destructive"
+          });
+        } else {
+          setProfile(newProfile);
+          toast({
+            title: "Welcome!",
+            description: "Your profile has been created. Please complete your details."
+          });
+          setEditing(true);
+        }
+      }
+    } else {
+      setProfile(data);
+    }
+
     setLoading(false);
   };
 
