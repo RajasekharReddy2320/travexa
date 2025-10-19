@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardNav from "@/components/DashboardNav";
@@ -7,8 +7,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Bookmark, MapPin, Calendar, Users, Search, MessageCircle } from "lucide-react";
+import { Heart, Bookmark, MapPin, Calendar, Users, Search, MessageCircle, Send } from "lucide-react";
 import { format } from "date-fns";
 
 interface Profile {
@@ -34,6 +35,21 @@ interface PublicTrip {
   isSaved?: boolean;
 }
 
+interface Message {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  content: string;
+  created_at: string;
+  read: boolean;
+}
+
+interface Conversation {
+  user: Profile;
+  lastMessage: Message | null;
+  unreadCount: number;
+}
+
 const Wanderlust = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -42,10 +58,48 @@ const Wanderlust = () => {
   const [publicTrips, setPublicTrips] = useState<PublicTrip[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [messageSearchQuery, setMessageSearchQuery] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     checkAuthAndLoad();
   }, []);
+
+  useEffect(() => {
+    if (selectedUser && currentUserId) {
+      loadMessages();
+      markAsRead();
+      
+      const channel = supabase
+        .channel('messages')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `recipient_id=eq.${currentUserId}`
+          },
+          () => {
+            loadMessages();
+            loadConversations();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [selectedUser, currentUserId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const checkAuthAndLoad = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -56,7 +110,7 @@ const Wanderlust = () => {
     }
 
     setCurrentUserId(session.user.id);
-    await Promise.all([loadUsers(), loadPublicTrips()]);
+    await Promise.all([loadUsers(), loadPublicTrips(), loadConversations()]);
     setLoading(false);
   };
 
@@ -199,8 +253,89 @@ const Wanderlust = () => {
     loadPublicTrips();
   };
 
+  const loadConversations = async () => {
+    const { data: allMessages } = await supabase
+      .from("messages")
+      .select("*")
+      .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
+      .order("created_at", { ascending: false });
+
+    if (!allMessages) return;
+
+    const otherUserIds = new Set<string>();
+    allMessages.forEach((msg) => {
+      const otherUserId = msg.sender_id === currentUserId ? msg.recipient_id : msg.sender_id;
+      otherUserIds.add(otherUserId);
+    });
+
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("id", Array.from(otherUserIds));
+
+    const convos: Conversation[] = [];
+    otherUserIds.forEach((userId) => {
+      const userMessages = allMessages.filter(
+        (m) => m.sender_id === userId || m.recipient_id === userId
+      );
+      const lastMessage = userMessages[0] || null;
+      const unreadCount = userMessages.filter(
+        (m) => m.recipient_id === currentUserId && !m.read
+      ).length;
+      const user = profiles?.find((p) => p.id === userId);
+
+      if (user) {
+        convos.push({ user, lastMessage, unreadCount });
+      }
+    });
+
+    setConversations(convos);
+  };
+
+  const loadMessages = async () => {
+    if (!selectedUser) return;
+
+    const { data } = await supabase
+      .from("messages")
+      .select("*")
+      .or(`and(sender_id.eq.${currentUserId},recipient_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},recipient_id.eq.${currentUserId})`)
+      .order("created_at", { ascending: true });
+
+    setMessages(data || []);
+  };
+
+  const markAsRead = async () => {
+    if (!selectedUser) return;
+
+    await supabase
+      .from("messages")
+      .update({ read: true })
+      .eq("sender_id", selectedUser.id)
+      .eq("recipient_id", currentUserId)
+      .eq("read", false);
+
+    loadConversations();
+  };
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !selectedUser) return;
+
+    await supabase.from("messages").insert({
+      sender_id: currentUserId,
+      recipient_id: selectedUser.id,
+      content: newMessage.trim(),
+    });
+
+    setNewMessage("");
+    loadMessages();
+    loadConversations();
+  };
+
   const handleMessage = (userId: string) => {
-    navigate("/messages", { state: { userId } });
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      setSelectedUser(user);
+    }
   };
 
   const filteredUsers = users.filter(user =>
@@ -227,6 +362,10 @@ const Wanderlust = () => {
     );
   }
 
+  const filteredConversations = conversations.filter(conv =>
+    conv.user.full_name?.toLowerCase().includes(messageSearchQuery.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <DashboardNav />
@@ -236,6 +375,14 @@ const Wanderlust = () => {
           <h1 className="text-3xl font-bold mb-2">Wanderlust</h1>
           <p className="text-muted-foreground">Discover travelers and their amazing journeys</p>
         </div>
+
+        <Tabs defaultValue="discover" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+            <TabsTrigger value="discover">Discover</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="discover" className="space-y-6">
 
         {/* Search */}
         <div className="mb-6">
@@ -377,6 +524,143 @@ const Wanderlust = () => {
             </Card>
           )}
         </div>
+          </TabsContent>
+
+          <TabsContent value="messages">
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Conversations List */}
+              <div className="md:col-span-1 space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Search conversations..."
+                    value={messageSearchQuery}
+                    onChange={(e) => setMessageSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  {filteredConversations.map((conv) => (
+                    <Card
+                      key={conv.user.id}
+                      className={`cursor-pointer hover:bg-accent transition-colors ${
+                        selectedUser?.id === conv.user.id ? "bg-accent" : ""
+                      }`}
+                      onClick={() => setSelectedUser(conv.user)}
+                    >
+                      <CardContent className="p-4 flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={conv.user.avatar_url || undefined} />
+                          <AvatarFallback>{getInitials(conv.user.full_name)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">
+                            {conv.user.full_name || "User"}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {conv.lastMessage?.content || "No messages yet"}
+                          </p>
+                        </div>
+                        {conv.unreadCount > 0 && (
+                          <Badge variant="default" className="ml-auto">
+                            {conv.unreadCount}
+                          </Badge>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                  {filteredConversations.length === 0 && (
+                    <Card>
+                      <CardContent className="py-8 text-center">
+                        <MessageCircle className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">No conversations yet</p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
+
+              {/* Messages Area */}
+              <div className="md:col-span-2">
+                {selectedUser ? (
+                  <Card className="h-[600px] flex flex-col">
+                    <CardHeader className="border-b">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={selectedUser.avatar_url || undefined} />
+                          <AvatarFallback>{getInitials(selectedUser.full_name)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-lg">
+                            {selectedUser.full_name || "User"}
+                          </CardTitle>
+                          {selectedUser.home_location && (
+                            <p className="text-xs text-muted-foreground">
+                              {selectedUser.home_location}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+                      {messages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`flex ${
+                            msg.sender_id === currentUserId ? "justify-end" : "justify-start"
+                          }`}
+                        >
+                          <div
+                            className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                              msg.sender_id === currentUserId
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted"
+                            }`}
+                          >
+                            <p className="text-sm">{msg.content}</p>
+                            <p className="text-xs opacity-70 mt-1">
+                              {format(new Date(msg.created_at), "HH:mm")}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </CardContent>
+
+                    <CardFooter className="border-t p-4">
+                      <div className="flex gap-2 w-full">
+                        <Input
+                          placeholder="Type a message..."
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                        />
+                        <Button onClick={sendMessage} size="icon">
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                ) : (
+                  <Card className="h-[600px] flex items-center justify-center">
+                    <CardContent className="text-center">
+                      <MessageCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-lg text-muted-foreground mb-2">
+                        Select a conversation
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Choose a traveler to start messaging
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
