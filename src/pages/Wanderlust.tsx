@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardNav from "@/components/DashboardNav";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +52,7 @@ interface Conversation {
 
 const Wanderlust = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<Profile[]>([]);
@@ -68,6 +69,16 @@ const Wanderlust = () => {
   useEffect(() => {
     checkAuthAndLoad();
   }, []);
+
+  useEffect(() => {
+    // Handle navigation from profile with pre-selected user
+    if (location.state?.selectedUserId && users.length > 0) {
+      const userToMessage = users.find(u => u.id === location.state.selectedUserId);
+      if (userToMessage) {
+        setSelectedUser(userToMessage);
+      }
+    }
+  }, [location.state, users]);
 
   useEffect(() => {
     if (selectedUser && currentUserId) {

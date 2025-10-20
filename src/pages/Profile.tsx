@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, MapPin, Globe, Calendar, LogOut } from "lucide-react";
+import { User, Mail, Phone, MapPin, Globe, Calendar, LogOut, MessageCircle } from "lucide-react";
 import DashboardNav from "@/components/DashboardNav";
 import { Badge } from "@/components/ui/badge";
 
@@ -266,11 +266,19 @@ const Profile = () => {
                   </div>
                 )}
               </div>
-              {isOwnProfile && (
-                <Button onClick={() => setEditing(!editing)}>
-                  {editing ? "Cancel" : "Edit Profile"}
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {!isOwnProfile && (
+                  <Button onClick={() => navigate('/wanderlust', { state: { selectedUserId: profile.id } })}>
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Message
+                  </Button>
+                )}
+                {isOwnProfile && (
+                  <Button onClick={() => setEditing(!editing)}>
+                    {editing ? "Cancel" : "Edit Profile"}
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
