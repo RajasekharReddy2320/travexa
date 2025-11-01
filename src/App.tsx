@@ -14,6 +14,8 @@ import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
 import CreateTrip from "./pages/CreateTrip";
 import Wanderlust from "./pages/Wanderlust";
+import Connections from "./pages/Connections";
+import SearchUsers from "./pages/SearchUsers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +35,8 @@ const App = () => (
           <Route path="/plan-trip" element={<PlanTrip />} />
           <Route path="/create-trip" element={<CreateTrip />} />
           <Route path="/wanderlust" element={<Wanderlust />} />
+          <Route path="/connections" element={<Connections />} />
+          <Route path="/search" element={<SearchUsers />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/messages" element={<Messages />} />

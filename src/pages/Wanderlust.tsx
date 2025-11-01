@@ -331,6 +331,30 @@ const Wanderlust = () => {
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedUser) return;
 
+    // Check if user can message
+    const { data: targetProfile } = await supabase
+      .from("profiles")
+      .select("is_public")
+      .eq("id", selectedUser.id)
+      .single();
+
+    if (!targetProfile?.is_public) {
+      // Check if connected
+      const { data: isConnected } = await supabase.rpc('are_users_connected', {
+        user1_id: currentUserId,
+        user2_id: selectedUser.id
+      });
+
+      if (!isConnected) {
+        toast({
+          title: "Cannot Send Message",
+          description: "You can only message connected users with private profiles",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     await supabase.from("messages").insert({
       sender_id: currentUserId,
       recipient_id: selectedUser.id,

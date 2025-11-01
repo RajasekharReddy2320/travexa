@@ -1,13 +1,21 @@
-import { Link, useLocation } from "react-router-dom";
-import { Search, MessageSquare, User, Plane, Compass } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Search, MessageSquare, User, Plane, Compass, UserCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
 const DashboardNav = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -19,18 +27,18 @@ const DashboardNav = () => {
         </Link>
 
         {/* Search Box */}
-        <div className="flex-1 max-w-md">
+        <form onSubmit={handleSearch} className="flex-1 max-w-md">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search destinations, trips..."
+              placeholder="Search users, destinations..."
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-        </div>
+        </form>
 
         {/* Navigation Tabs */}
         <div className="flex items-center gap-1">
@@ -56,6 +64,18 @@ const DashboardNav = () => {
           >
             <Compass className="h-4 w-4" />
             <span className="hidden sm:inline-block">Wanderlust</span>
+          </Link>
+
+          <Link
+            to="/connections"
+            className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+              isActive("/connections")
+                ? "bg-accent text-accent-foreground"
+                : "hover:bg-accent/50"
+            }`}
+          >
+            <UserCheck className="h-4 w-4" />
+            <span className="hidden sm:inline-block">Connections</span>
           </Link>
 
           <Link

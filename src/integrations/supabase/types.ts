@@ -85,6 +85,7 @@ export type Database = {
           home_location: string | null
           id: string
           interests: string[] | null
+          is_public: boolean | null
           languages_spoken: string[] | null
           onboarding_completed: boolean | null
           phone: string | null
@@ -106,6 +107,7 @@ export type Database = {
           home_location?: string | null
           id: string
           interests?: string[] | null
+          is_public?: boolean | null
           languages_spoken?: string[] | null
           onboarding_completed?: boolean | null
           phone?: string | null
@@ -127,6 +129,7 @@ export type Database = {
           home_location?: string | null
           id?: string
           interests?: string[] | null
+          is_public?: boolean | null
           languages_spoken?: string[] | null
           onboarding_completed?: boolean | null
           phone?: string | null
@@ -228,6 +231,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_connections: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_follows: {
         Row: {
           created_at: string
@@ -275,6 +305,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      are_users_connected: {
+        Args: { user1_id: string; user2_id: string }
+        Returns: boolean
+      }
+      get_connection_status: {
+        Args: { user1_id: string; user2_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, MapPin, Globe, Calendar, LogOut, MessageCircle } from "lucide-react";
+import { User, Mail, Phone, MapPin, Globe, Calendar, LogOut, MessageCircle, UserPlus, UserCheck, UserMinus, Lock, Unlock, X } from "lucide-react";
 import DashboardNav from "@/components/DashboardNav";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 interface Profile {
   id: string;
@@ -28,6 +29,7 @@ interface Profile {
   interests: string[] | null;
   travel_preferences: string[] | null;
   avatar_url: string | null;
+  is_public: boolean;
 }
 
 const Profile = () => {
@@ -41,10 +43,13 @@ const Profile = () => {
   const [likedTrips, setLikedTrips] = useState<any[]>([]);
   const [bucketList, setBucketList] = useState<any[]>([]);
   const [userTrips, setUserTrips] = useState<any[]>([]);
+  const [connectionStatus, setConnectionStatus] = useState<string>("none");
+  const [canMessage, setCanMessage] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [userId]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -54,10 +59,36 @@ const Profile = () => {
       return;
     }
 
+    setCurrentUserId(session.user.id);
     const targetUserId = userId || session.user.id;
-    setIsOwnProfile(!userId || userId === session.user.id);
+    const isOwn = !userId || userId === session.user.id;
+    setIsOwnProfile(isOwn);
+    
     await loadProfile(targetUserId);
     await loadUserActivity(targetUserId);
+    
+    if (!isOwn) {
+      await loadConnectionStatus(session.user.id, targetUserId);
+    }
+  };
+
+  const loadConnectionStatus = async (currentId: string, targetId: string) => {
+    const { data } = await supabase.rpc('get_connection_status', {
+      user1_id: currentId,
+      user2_id: targetId
+    });
+
+    const status = data || 'none';
+    setConnectionStatus(status);
+
+    // Check if user can message
+    const { data: targetProfile } = await supabase
+      .from("profiles")
+      .select("is_public")
+      .eq("id", targetId)
+      .single();
+
+    setCanMessage(targetProfile?.is_public || status === 'connected');
   };
 
   const loadProfile = async (targetUserId: string) => {
@@ -97,7 +128,8 @@ const Profile = () => {
           languages_spoken: [],
           interests: [],
           travel_preferences: [],
-          avatar_url: null
+          avatar_url: null,
+          is_public: true
         };
 
         const { error: insertError } = await supabase
@@ -183,6 +215,7 @@ const Profile = () => {
         languages_spoken: profile.languages_spoken,
         interests: profile.interests,
         travel_preferences: profile.travel_preferences,
+        is_public: profile.is_public,
       })
       .eq("id", profile.id);
 
@@ -206,6 +239,84 @@ const Profile = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/login");
+  };
+
+  const handleConnectionAction = async () => {
+    if (!profile) return;
+
+    if (connectionStatus === 'none') {
+      // Send connection request
+      const { error } = await supabase
+        .from("user_connections")
+        .insert({
+          requester_id: currentUserId,
+          addressee_id: profile.id,
+          status: "pending"
+        });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to send connection request",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Request Sent",
+        description: "Connection request sent successfully"
+      });
+      
+      await loadConnectionStatus(currentUserId, profile.id);
+    } else if (connectionStatus === 'pending_sent') {
+      // Cancel request
+      const { error } = await supabase
+        .from("user_connections")
+        .delete()
+        .eq("requester_id", currentUserId)
+        .eq("addressee_id", profile.id)
+        .eq("status", "pending");
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to cancel request",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Request Cancelled",
+        description: "Connection request cancelled"
+      });
+      
+      await loadConnectionStatus(currentUserId, profile.id);
+    } else if (connectionStatus === 'connected') {
+      // Remove connection
+      const { error } = await supabase
+        .from("user_connections")
+        .delete()
+        .or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${profile.id}),and(requester_id.eq.${profile.id},addressee_id.eq.${currentUserId})`)
+        .eq("status", "accepted");
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to remove connection",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Connection Removed",
+        description: "User removed from your connections"
+      });
+      
+      await loadConnectionStatus(currentUserId, profile.id);
+    }
   };
 
   const getInitials = (name: string | null) => {
@@ -268,10 +379,42 @@ const Profile = () => {
               </div>
               <div className="flex gap-2">
                 {!isOwnProfile && (
-                  <Button onClick={() => navigate('/wanderlust', { state: { selectedUserId: profile.id } })}>
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Message
-                  </Button>
+                  <>
+                    {connectionStatus === 'none' && (
+                      <Button onClick={handleConnectionAction}>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Connect
+                      </Button>
+                    )}
+                    {connectionStatus === 'pending_sent' && (
+                      <Button variant="outline" onClick={handleConnectionAction}>
+                        <X className="mr-2 h-4 w-4" />
+                        Cancel Request
+                      </Button>
+                    )}
+                    {connectionStatus === 'pending_received' && (
+                      <Button onClick={() => navigate('/connections')}>
+                        View Request
+                      </Button>
+                    )}
+                    {connectionStatus === 'connected' && (
+                      <>
+                        <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1">
+                          <UserCheck className="h-4 w-4" />
+                          Connected
+                        </Badge>
+                        <Button variant="ghost" size="icon" onClick={handleConnectionAction}>
+                          <UserMinus className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                    {canMessage && (
+                      <Button onClick={() => navigate('/wanderlust', { state: { selectedUserId: profile.id } })}>
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        Message
+                      </Button>
+                    )}
+                  </>
                 )}
                 {isOwnProfile && (
                   <Button onClick={() => setEditing(!editing)}>
@@ -407,6 +550,56 @@ const Profile = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Privacy Settings */}
+        {isOwnProfile && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {profile.is_public ? <Unlock className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
+                Privacy Settings
+              </CardTitle>
+              <CardDescription>
+                Control who can view your profile and message you
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="privacy-toggle" className="text-base">
+                    Public Profile
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {profile.is_public 
+                      ? "Anyone can view your profile and send you messages" 
+                      : "Only connected users can view your full profile and message you"}
+                  </p>
+                </div>
+                <Switch
+                  id="privacy-toggle"
+                  checked={profile.is_public}
+                  onCheckedChange={(checked) => setProfile({ ...profile, is_public: checked })}
+                  disabled={!editing}
+                />
+              </div>
+              
+              {!profile.is_public && (
+                <div className="rounded-lg bg-muted p-4">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    Private Profile Features
+                  </h4>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Only connected users can see your full profile</li>
+                    <li>Others can only see your name and profile picture</li>
+                    <li>Only connected users can message you</li>
+                    <li>You appear in search with limited information</li>
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Languages */}
         <Card className="mb-6">
