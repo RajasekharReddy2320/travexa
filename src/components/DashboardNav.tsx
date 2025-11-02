@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, MessageSquare, User, Plane, Compass, UserCheck } from "lucide-react";
+import { Search, MessageSquare, User, Plane, Compass, UserCheck, Ticket } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
@@ -88,6 +88,18 @@ const DashboardNav = () => {
           >
             <MessageSquare className="h-4 w-4" />
             <span className="hidden sm:inline-block">Messages</span>
+          </Link>
+
+          <Link
+            to="/my-tickets"
+            className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+              isActive("/my-tickets")
+                ? "bg-accent text-accent-foreground"
+                : "hover:bg-accent/50"
+            }`}
+          >
+            <Ticket className="h-4 w-4" />
+            <span className="hidden sm:inline-block">Tickets</span>
           </Link>
 
           <Link

@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          arrival_date: string | null
+          arrival_time: string | null
+          booking_details: Json | null
+          booking_reference: string
+          booking_type: string
+          class_type: string | null
+          created_at: string
+          departure_date: string
+          departure_time: string
+          from_location: string
+          id: string
+          passenger_email: string
+          passenger_name: string
+          passenger_phone: string
+          payment_id: string | null
+          payment_status: string
+          price_inr: number
+          qr_code: string | null
+          seat_number: string | null
+          service_name: string
+          service_number: string
+          status: string
+          to_location: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          arrival_date?: string | null
+          arrival_time?: string | null
+          booking_details?: Json | null
+          booking_reference: string
+          booking_type: string
+          class_type?: string | null
+          created_at?: string
+          departure_date: string
+          departure_time: string
+          from_location: string
+          id?: string
+          passenger_email: string
+          passenger_name: string
+          passenger_phone: string
+          payment_id?: string | null
+          payment_status?: string
+          price_inr: number
+          qr_code?: string | null
+          seat_number?: string | null
+          service_name: string
+          service_number: string
+          status?: string
+          to_location: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          arrival_date?: string | null
+          arrival_time?: string | null
+          booking_details?: Json | null
+          booking_reference?: string
+          booking_type?: string
+          class_type?: string | null
+          created_at?: string
+          departure_date?: string
+          departure_time?: string
+          from_location?: string
+          id?: string
+          passenger_email?: string
+          passenger_name?: string
+          passenger_phone?: string
+          payment_id?: string | null
+          payment_status?: string
+          price_inr?: number
+          qr_code?: string | null
+          seat_number?: string | null
+          service_name?: string
+          service_number?: string
+          status?: string
+          to_location?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bucket_list: {
         Row: {
           created_at: string
@@ -138,6 +222,38 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      ticket_verifications: {
+        Row: {
+          booking_id: string
+          id: string
+          verification_location: string | null
+          verified_at: string
+          verified_by: string | null
+        }
+        Insert: {
+          booking_id: string
+          id?: string
+          verification_location?: string | null
+          verified_at?: string
+          verified_by?: string | null
+        }
+        Update: {
+          booking_id?: string
+          id?: string
+          verification_location?: string | null
+          verified_at?: string
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_verifications_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trip_likes: {
         Row: {

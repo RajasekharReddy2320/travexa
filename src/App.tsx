@@ -16,6 +16,10 @@ import CreateTrip from "./pages/CreateTrip";
 import Wanderlust from "./pages/Wanderlust";
 import Connections from "./pages/Connections";
 import SearchUsers from "./pages/SearchUsers";
+import BookTransport from "./pages/BookTransport";
+import BookConfirm from "./pages/BookConfirm";
+import MyTickets from "./pages/MyTickets";
+import TicketDetails from "./pages/TicketDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +41,10 @@ const App = () => (
           <Route path="/wanderlust" element={<Wanderlust />} />
           <Route path="/connections" element={<Connections />} />
           <Route path="/search" element={<SearchUsers />} />
+          <Route path="/book-transport" element={<BookTransport />} />
+          <Route path="/book-confirm" element={<BookConfirm />} />
+          <Route path="/my-tickets" element={<MyTickets />} />
+          <Route path="/ticket-details" element={<TicketDetails />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/messages" element={<Messages />} />
