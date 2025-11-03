@@ -79,10 +79,14 @@ export default function QRScanner() {
         async (decodedText) => {
           // Stop scanning after successful scan
           try {
-            await html5QrCode.stop();
-            setScanning(false);
+            if (scannerRef.current) {
+              await scannerRef.current.stop();
+              scannerRef.current = null;
+            }
           } catch (stopErr) {
-            console.log("Scanner already stopped");
+            // Ignore stop errors
+          } finally {
+            setScanning(false);
           }
           
           try {
@@ -118,16 +122,18 @@ export default function QRScanner() {
       console.error("Error starting scanner:", err);
       setError("Failed to start camera. Please check permissions.");
       setScanning(false);
+      scannerRef.current = null;
     }
   };
 
   const stopScanning = async () => {
-    if (scannerRef.current && scanning) {
+    if (scannerRef.current) {
       try {
         await scannerRef.current.stop();
-        setScanning(false);
       } catch (err) {
-        console.log("Scanner already stopped");
+        // Ignore stop errors
+      } finally {
+        scannerRef.current = null;
         setScanning(false);
       }
     }
@@ -142,13 +148,15 @@ export default function QRScanner() {
 
   useEffect(() => {
     return () => {
-      if (scannerRef.current && scanning) {
+      if (scannerRef.current) {
         scannerRef.current.stop().catch(() => {
           // Ignore errors on cleanup
+        }).finally(() => {
+          scannerRef.current = null;
         });
       }
     };
-  }, [scanning]);
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
