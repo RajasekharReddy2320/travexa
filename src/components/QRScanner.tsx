@@ -264,7 +264,10 @@ export default function QRScanner() {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2 bg-primary/10 rounded-lg">
-                    {getIcon(currentSegment.booking_type)({ className: "h-5 w-5 text-primary" })}
+                    {(() => {
+                      const Icon = getIcon(currentSegment.booking_type);
+                      return <Icon className="h-5 w-5 text-primary" />;
+                    })()}
                   </div>
                   <div>
                     <h3 className="font-semibold">{currentSegment.service_name}</h3>
