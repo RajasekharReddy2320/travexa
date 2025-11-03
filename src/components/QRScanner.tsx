@@ -94,22 +94,57 @@ export default function QRScanner() {
             const qrData = JSON.parse(atob(decodedText));
             setScannedData(qrData);
 
-            // Fetch trip segments
-            const { data: segmentsData, error: segmentsError } = await supabase
-              .from('trip_segments')
-              .select('*')
-              .eq('trip_group_id', qrData.tripGroupId)
-              .order('segment_order', { ascending: true });
+            // Check if it's a multi-segment trip or single booking
+            if (qrData.tripGroupId) {
+              // Multi-segment trip - fetch all segments
+              const { data: segmentsData, error: segmentsError } = await supabase
+                .from('trip_segments')
+                .select('*')
+                .eq('trip_group_id', qrData.tripGroupId)
+                .order('segment_order', { ascending: true });
 
-            if (segmentsError) throw segmentsError;
+              if (segmentsError) throw segmentsError;
 
-            if (segmentsData && segmentsData.length > 0) {
-              setSegments(segmentsData);
-              const current = determineCurrentSegment(segmentsData);
-              setCurrentSegment(current);
+              if (segmentsData && segmentsData.length > 0) {
+                setSegments(segmentsData);
+                const current = determineCurrentSegment(segmentsData);
+                setCurrentSegment(current);
+              }
+            } else if (qrData.ref) {
+              // Single booking - fetch from bookings table
+              const { data: bookingData, error: bookingError } = await supabase
+                .from('bookings')
+                .select('*')
+                .eq('booking_reference', qrData.ref)
+                .single();
+
+              if (bookingError) throw bookingError;
+
+              if (bookingData) {
+                // Convert single booking to segment format for display
+                const segment: ScannedSegment = {
+                  booking_type: bookingData.booking_type,
+                  service_name: bookingData.service_name,
+                  service_number: bookingData.service_number,
+                  from_location: bookingData.from_location,
+                  to_location: bookingData.to_location,
+                  departure_date: bookingData.departure_date,
+                  departure_time: bookingData.departure_time,
+                  arrival_time: bookingData.arrival_time,
+                  seat_number: bookingData.seat_number || '',
+                  class_type: bookingData.class_type || '',
+                  segment_order: 1,
+                  status: bookingData.status,
+                };
+                setSegments([segment]);
+                setCurrentSegment(segment);
+              }
+            } else {
+              throw new Error("Invalid QR code format");
             }
           } catch (err) {
-            setError("Invalid QR code format");
+            console.error("QR scan error:", err);
+            setError("Invalid QR code format. Please scan a valid ticket QR code.");
           }
         },
         (errorMessage) => {
