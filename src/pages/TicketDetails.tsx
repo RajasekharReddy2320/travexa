@@ -42,12 +42,8 @@ export default function TicketDetails() {
   useEffect(() => {
     if (booking && qrCanvasRef.current) {
       try {
-        const qrData = JSON.parse(atob(booking.qr_code));
-        const qrText = isMultiSegment
-          ? JSON.stringify(qrData)
-          : `TRAVEXA TICKET\nRef: ${qrData.ref}\nType: ${qrData.type}\nFrom: ${qrData.from}\nTo: ${qrData.to}\nDate: ${qrData.date}\nTime: ${qrData.time}\nPassenger: ${qrData.passenger}\nSeat: ${qrData.seat}`;
-        
-        QRCode.toCanvas(qrCanvasRef.current, qrText, {
+        // Generate QR code with base64-encoded data for scanner compatibility
+        QRCode.toCanvas(qrCanvasRef.current, booking.qr_code, {
           width: 256,
           margin: 2,
           color: {
