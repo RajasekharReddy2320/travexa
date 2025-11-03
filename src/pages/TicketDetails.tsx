@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import DashboardNav from "@/components/DashboardNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,13 +14,35 @@ export default function TicketDetails() {
   const navigate = useNavigate();
   const { booking } = location.state || {};
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [segments, setSegments] = useState<any[]>([]);
+  const [isMultiSegment, setIsMultiSegment] = useState(false);
+
+  useEffect(() => {
+    const fetchSegments = async () => {
+      if (booking?.trip_group_id) {
+        const { data } = await supabase
+          .from('trip_segments')
+          .select('*')
+          .eq('trip_group_id', booking.trip_group_id)
+          .order('segment_order', { ascending: true });
+        
+        if (data && data.length > 0) {
+          setSegments(data);
+          setIsMultiSegment(true);
+        }
+      }
+    };
+
+    fetchSegments();
+  }, [booking]);
 
   useEffect(() => {
     if (booking && qrCanvasRef.current) {
-      // Decode QR data and generate QR code
       try {
         const qrData = JSON.parse(atob(booking.qr_code));
-        const qrText = `TRAVEXA TICKET\nRef: ${qrData.ref}\nType: ${qrData.type}\nFrom: ${qrData.from}\nTo: ${qrData.to}\nDate: ${qrData.date}\nTime: ${qrData.time}\nPassenger: ${qrData.passenger}\nSeat: ${qrData.seat}`;
+        const qrText = isMultiSegment
+          ? JSON.stringify(qrData)
+          : `TRAVEXA TICKET\nRef: ${qrData.ref}\nType: ${qrData.type}\nFrom: ${qrData.from}\nTo: ${qrData.to}\nDate: ${qrData.date}\nTime: ${qrData.time}\nPassenger: ${qrData.passenger}\nSeat: ${qrData.seat}`;
         
         QRCode.toCanvas(qrCanvasRef.current, qrText, {
           width: 256,
@@ -33,7 +56,7 @@ export default function TicketDetails() {
         console.error('Error generating QR code:', error);
       }
     }
-  }, [booking]);
+  }, [booking, isMultiSegment]);
 
   if (!booking) {
     navigate('/my-tickets');
@@ -103,30 +126,81 @@ export default function TicketDetails() {
           </CardHeader>
           <CardContent className="p-6">
             {/* Journey Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-              <div>
-                <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                  <MapPin className="h-4 w-4" />
-                  <span className="text-sm font-semibold">FROM</span>
+            {isMultiSegment && segments.length > 0 ? (
+              <div className="space-y-4 mb-6">
+                <h3 className="font-semibold">Multi-Segment Journey</h3>
+                {segments.map((segment, index) => {
+                  const SegmentIcon = getIcon(segment.booking_type);
+                  return (
+                    <div key={index} className="p-4 border rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                          {index + 1}
+                        </div>
+                        <SegmentIcon className="h-4 w-4" />
+                        <span className="font-semibold">{segment.service_name}</span>
+                        <span className="text-sm text-muted-foreground ml-auto">{segment.service_number}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 ml-8">
+                        <div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                            <MapPin className="h-3 w-3" />
+                            <span>FROM</span>
+                          </div>
+                          <p className="font-semibold">{segment.from_location}</p>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {segment.departure_time}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground mb-1">
+                            <span>TO</span>
+                            <MapPin className="h-3 w-3" />
+                          </div>
+                          <p className="font-semibold">{segment.to_location}</p>
+                          <div className="flex items-center justify-end gap-1 text-sm text-muted-foreground">
+                            {segment.arrival_time}
+                            <Clock className="h-3 w-3" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-2 ml-8 text-sm text-muted-foreground">
+                        <Calendar className="h-3 w-3 inline mr-1" />
+                        {new Date(segment.departure_date).toLocaleDateString('en-IN')}
+                        {" • "}
+                        Seat: {segment.seat_number} • Class: {segment.class_type}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                <div>
+                  <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                    <MapPin className="h-4 w-4" />
+                    <span className="text-sm font-semibold">FROM</span>
+                  </div>
+                  <p className="text-2xl font-bold mb-1">{booking.from_location}</p>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>{booking.departure_time}</span>
+                  </div>
                 </div>
-                <p className="text-2xl font-bold mb-1">{booking.from_location}</p>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>{booking.departure_time}</span>
+                <div className="text-right">
+                  <div className="flex items-center justify-end gap-2 text-muted-foreground mb-2">
+                    <span className="text-sm font-semibold">TO</span>
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <p className="text-2xl font-bold mb-1">{booking.to_location}</p>
+                  <div className="flex items-center justify-end gap-2 text-muted-foreground">
+                    <span>{booking.arrival_time}</span>
+                    <Clock className="h-4 w-4" />
+                  </div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="flex items-center justify-end gap-2 text-muted-foreground mb-2">
-                  <span className="text-sm font-semibold">TO</span>
-                  <MapPin className="h-4 w-4" />
-                </div>
-                <p className="text-2xl font-bold mb-1">{booking.to_location}</p>
-                <div className="flex items-center justify-end gap-2 text-muted-foreground">
-                  <span>{booking.arrival_time}</span>
-                  <Clock className="h-4 w-4" />
-                </div>
-              </div>
-            </div>
+            )}
 
             <div className="flex items-center gap-2 text-muted-foreground mb-6">
               <Calendar className="h-4 w-4" />

@@ -38,11 +38,27 @@ const Cart = () => {
         return;
       }
 
-      // Process all bookings
-      const bookingPromises = items.map(async (item) => {
-        const { data, error } = await supabase.functions.invoke("create-booking", {
-          body: {
+      // Create trip group ID for multi-segment booking
+      const tripGroupId = crypto.randomUUID();
+      
+      // Generate booking reference for the entire trip
+      const bookingReference = `TRV${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      
+      // Sort items by departure date/time
+      const sortedItems = [...items].sort((a, b) => {
+        const dateA = new Date(`${a.departure_date}T${a.departure_time}`);
+        const dateB = new Date(`${b.departure_date}T${b.departure_time}`);
+        return dateA.getTime() - dateB.getTime();
+      });
+
+      // Create all segments
+      const segmentPromises = sortedItems.map(async (item, index) => {
+        const { error } = await supabase
+          .from('trip_segments')
+          .insert({
+            trip_group_id: tripGroupId,
             user_id: user.id,
+            segment_order: index + 1,
             booking_type: item.booking_type,
             service_name: item.service_name,
             service_number: item.service_number,
@@ -51,25 +67,58 @@ const Cart = () => {
             departure_date: item.departure_date,
             departure_time: item.departure_time,
             arrival_time: item.arrival_time,
-            duration: item.duration,
-            price_inr: item.price_inr,
             passenger_name: item.passenger_name,
             passenger_email: item.passenger_email,
             passenger_phone: item.passenger_phone,
             seat_number: item.seat_number,
             class_type: item.class_type,
-          },
-        });
+            price_inr: item.price_inr,
+            payment_status: 'completed',
+            status: 'confirmed',
+          });
 
         if (error) throw error;
-        return data;
       });
 
-      await Promise.all(bookingPromises);
+      await Promise.all(segmentPromises);
+
+      // Create main booking record for the trip
+      const qrData = {
+        ref: bookingReference,
+        tripGroupId,
+        segments: sortedItems.length,
+        passenger: sortedItems[0].passenger_name,
+      };
+      const qrCode = btoa(JSON.stringify(qrData));
+
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          user_id: user.id,
+          trip_group_id: tripGroupId,
+          booking_reference: bookingReference,
+          booking_type: 'multi-segment',
+          passenger_name: sortedItems[0].passenger_name,
+          passenger_email: sortedItems[0].passenger_email,
+          passenger_phone: sortedItems[0].passenger_phone,
+          from_location: sortedItems[0].from_location,
+          to_location: sortedItems[sortedItems.length - 1].to_location,
+          departure_date: sortedItems[0].departure_date,
+          departure_time: sortedItems[0].departure_time,
+          arrival_time: sortedItems[sortedItems.length - 1].arrival_time,
+          service_name: `Multi-Segment Trip (${sortedItems.length} legs)`,
+          service_number: bookingReference,
+          price_inr: totalPrice,
+          payment_status: 'completed',
+          status: 'confirmed',
+          qr_code: qrCode,
+        });
+
+      if (bookingError) throw bookingError;
 
       toast({
-        title: "Booking Successful!",
-        description: `${itemCount} ticket(s) booked successfully for ₹${totalPrice.toLocaleString("en-IN")}`,
+        title: "Multi-Segment Trip Booked!",
+        description: `${itemCount} connecting tickets booked successfully for ₹${totalPrice.toLocaleString("en-IN")}`,
       });
 
       clearCart();

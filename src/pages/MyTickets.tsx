@@ -4,9 +4,10 @@ import DashboardNav from "@/components/DashboardNav";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plane, Train, Bus, QrCode, Download, Calendar, MapPin, User } from "lucide-react";
+import { Plane, Train, Bus, QrCode, Download, Calendar, MapPin, User, ScanLine } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import QRScanner from "@/components/QRScanner";
 
 export default function MyTickets() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function MyTickets() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "flight" | "train" | "bus">("all");
+  const [activeTab, setActiveTab] = useState<"tickets" | "scanner">("tickets");
 
   useEffect(() => {
     fetchBookings();
@@ -96,50 +98,74 @@ export default function MyTickets() {
       <DashboardNav />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">My Tickets</h1>
-            <p className="text-muted-foreground">View and manage your bookings</p>
-          </div>
-          
-          {/* Filter Buttons */}
-          <div className="flex gap-2">
-            <Button
-              variant={filter === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter("all")}
-            >
-              All
-            </Button>
-            <Button
-              variant={filter === "flight" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter("flight")}
-              className="gap-2"
-            >
-              <Plane className="h-4 w-4" />
-              <span className="hidden sm:inline">Flights</span>
-            </Button>
-            <Button
-              variant={filter === "train" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter("train")}
-              className="gap-2"
-            >
-              <Train className="h-4 w-4" />
-              <span className="hidden sm:inline">Trains</span>
-            </Button>
-            <Button
-              variant={filter === "bus" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter("bus")}
-              className="gap-2"
-            >
-              <Bus className="h-4 w-4" />
-              <span className="hidden sm:inline">Buses</span>
-            </Button>
-          </div>
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant={activeTab === "tickets" ? "default" : "outline"}
+            onClick={() => setActiveTab("tickets")}
+            className="gap-2"
+          >
+            <QrCode className="h-4 w-4" />
+            My Tickets
+          </Button>
+          <Button
+            variant={activeTab === "scanner" ? "default" : "outline"}
+            onClick={() => setActiveTab("scanner")}
+            className="gap-2"
+          >
+            <ScanLine className="h-4 w-4" />
+            QR Scanner
+          </Button>
         </div>
+
+        {activeTab === "scanner" ? (
+          <QRScanner />
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">My Tickets</h1>
+                <p className="text-muted-foreground">View and manage your bookings</p>
+              </div>
+              
+              {/* Filter Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  variant={filter === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilter("all")}
+                >
+                  All
+                </Button>
+                <Button
+                  variant={filter === "flight" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilter("flight")}
+                  className="gap-2"
+                >
+                  <Plane className="h-4 w-4" />
+                  <span className="hidden sm:inline">Flights</span>
+                </Button>
+                <Button
+                  variant={filter === "train" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilter("train")}
+                  className="gap-2"
+                >
+                  <Train className="h-4 w-4" />
+                  <span className="hidden sm:inline">Trains</span>
+                </Button>
+                <Button
+                  variant={filter === "bus" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilter("bus")}
+                  className="gap-2"
+                >
+                  <Bus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Buses</span>
+                </Button>
+              </div>
+            </div>
 
         <div className="space-y-4">
           {filteredBookings.length === 0 ? (
@@ -252,6 +278,8 @@ export default function MyTickets() {
             })
           )}
         </div>
+          </>
+        )}
       </div>
     </div>
   );

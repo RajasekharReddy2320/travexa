@@ -39,6 +39,7 @@ export type Database = {
           service_number: string
           status: string
           to_location: string
+          trip_group_id: string | null
           updated_at: string
           user_id: string
         }
@@ -66,6 +67,7 @@ export type Database = {
           service_number: string
           status?: string
           to_location: string
+          trip_group_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -93,6 +95,7 @@ export type Database = {
           service_number?: string
           status?: string
           to_location?: string
+          trip_group_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -283,6 +286,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trip_segments: {
+        Row: {
+          arrival_time: string
+          booking_type: string
+          class_type: string | null
+          created_at: string | null
+          departure_date: string
+          departure_time: string
+          from_location: string
+          id: string
+          passenger_email: string
+          passenger_name: string
+          passenger_phone: string
+          payment_status: string
+          price_inr: number
+          seat_number: string | null
+          segment_order: number
+          service_name: string
+          service_number: string
+          status: string
+          to_location: string
+          trip_group_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          arrival_time: string
+          booking_type: string
+          class_type?: string | null
+          created_at?: string | null
+          departure_date: string
+          departure_time: string
+          from_location: string
+          id?: string
+          passenger_email: string
+          passenger_name: string
+          passenger_phone: string
+          payment_status?: string
+          price_inr: number
+          seat_number?: string | null
+          segment_order: number
+          service_name: string
+          service_number: string
+          status?: string
+          to_location: string
+          trip_group_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          arrival_time?: string
+          booking_type?: string
+          class_type?: string | null
+          created_at?: string | null
+          departure_date?: string
+          departure_time?: string
+          from_location?: string
+          id?: string
+          passenger_email?: string
+          passenger_name?: string
+          passenger_phone?: string
+          payment_status?: string
+          price_inr?: number
+          seat_number?: string | null
+          segment_order?: number
+          service_name?: string
+          service_number?: string
+          status?: string
+          to_location?: string
+          trip_group_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       trips: {
         Row: {
