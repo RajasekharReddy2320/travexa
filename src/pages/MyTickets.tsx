@@ -4,7 +4,8 @@ import DashboardNav from "@/components/DashboardNav";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plane, Train, Bus, QrCode, Download, Calendar, MapPin, User, ScanLine } from "lucide-react";
+import { Plane, Train, Bus, QrCode, Download, Calendar, MapPin, User, ScanLine, X } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import QRScanner from "@/components/QRScanner";
@@ -80,6 +81,47 @@ export default function MyTickets() {
 
   const handleViewTicket = (booking: any) => {
     navigate('/ticket-details', { state: { booking } });
+  };
+
+  const handleCancelTrip = async (booking: any) => {
+    try {
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .update({ 
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString()
+        })
+        .eq('id', booking.id);
+
+      if (bookingError) throw bookingError;
+
+      // If multi-segment, cancel all segments
+      if (booking.trip_group_id) {
+        const { error: segmentsError } = await supabase
+          .from('trip_segments')
+          .update({ 
+            status: 'cancelled',
+            cancelled_at: new Date().toISOString()
+          })
+          .eq('trip_group_id', booking.trip_group_id);
+
+        if (segmentsError) throw segmentsError;
+      }
+
+      toast({
+        title: "Trip Cancelled",
+        description: "Your booking has been cancelled successfully",
+      });
+
+      fetchBookings();
+    } catch (error: any) {
+      console.error('Error cancelling trip:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel trip",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -271,6 +313,30 @@ export default function MyTickets() {
                         <Download className="mr-2 h-4 w-4" />
                         Download Ticket
                       </Button>
+                      {booking.status === 'confirmed' && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="icon">
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancel Trip?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to cancel this booking? This action cannot be undone.
+                                {booking.booking_type === 'multi-segment' && ' All segments of this trip will be cancelled.'}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleCancelTrip(booking)}>
+                                Cancel Trip
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

@@ -21,6 +21,8 @@ export type Database = {
           booking_details: Json | null
           booking_reference: string
           booking_type: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
           class_type: string | null
           created_at: string
           departure_date: string
@@ -49,6 +51,8 @@ export type Database = {
           booking_details?: Json | null
           booking_reference: string
           booking_type: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           class_type?: string | null
           created_at?: string
           departure_date: string
@@ -77,6 +81,8 @@ export type Database = {
           booking_details?: Json | null
           booking_reference?: string
           booking_type?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           class_type?: string | null
           created_at?: string
           departure_date?: string
@@ -291,6 +297,8 @@ export type Database = {
         Row: {
           arrival_time: string
           booking_type: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
           class_type: string | null
           created_at: string | null
           departure_date: string
@@ -315,6 +323,8 @@ export type Database = {
         Insert: {
           arrival_time: string
           booking_type: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           class_type?: string | null
           created_at?: string | null
           departure_date: string
@@ -339,6 +349,8 @@ export type Database = {
         Update: {
           arrival_time?: string
           booking_type?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           class_type?: string | null
           created_at?: string | null
           departure_date?: string

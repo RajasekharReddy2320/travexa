@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Plane, Train, Bus, MapPin, Calendar, Clock, User, CreditCard, Download, Printer } from "lucide-react";
+import { Plane, Train, Bus, MapPin, Calendar, Clock, User, CreditCard, Download, Printer, X } from "lucide-react";
 import QRCode from "qrcode";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function TicketDetails() {
   const location = useLocation();
@@ -16,6 +18,7 @@ export default function TicketDetails() {
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
   const [segments, setSegments] = useState<any[]>([]);
   const [isMultiSegment, setIsMultiSegment] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchSegments = async () => {
@@ -87,6 +90,48 @@ export default function TicketDetails() {
     }
   };
 
+  const handleCancelTrip = async () => {
+    try {
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .update({ 
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString()
+        })
+        .eq('id', booking.id);
+
+      if (bookingError) throw bookingError;
+
+      // If multi-segment, cancel all segments
+      if (booking.trip_group_id) {
+        const { error: segmentsError } = await supabase
+          .from('trip_segments')
+          .update({ 
+            status: 'cancelled',
+            cancelled_at: new Date().toISOString()
+          })
+          .eq('trip_group_id', booking.trip_group_id);
+
+        if (segmentsError) throw segmentsError;
+      }
+
+      toast({
+        title: "Trip Cancelled",
+        description: "Your booking has been cancelled successfully",
+      });
+
+      // Navigate back after a short delay
+      setTimeout(() => navigate('/my-tickets'), 1500);
+    } catch (error: any) {
+      console.error('Error cancelling trip:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel trip",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <DashboardNav />
@@ -106,6 +151,31 @@ export default function TicketDetails() {
               <Download className="mr-2 h-4 w-4" />
               Download
             </Button>
+            {booking.status === 'confirmed' && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">
+                    <X className="mr-2 h-4 w-4" />
+                    Cancel Trip
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel Trip?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to cancel this booking? This action cannot be undone.
+                      {isMultiSegment && ' All segments of this trip will be cancelled.'}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleCancelTrip}>
+                      Cancel Trip
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
 
