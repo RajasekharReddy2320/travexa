@@ -8,12 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plane, Train, Bus, CreditCard } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import { Plane, Train, Bus, CreditCard, ShoppingCart } from "lucide-react";
 
 export default function BookConfirm() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { addToCart } = useCart();
   const { bookingType, booking } = location.state || {};
   
   const [loading, setLoading] = useState(false);
@@ -31,6 +33,60 @@ export default function BookConfirm() {
       return booking.classes[booking.selectedClass].price;
     }
     return booking.price;
+  };
+
+  const handleAddToCart = () => {
+    if (!passengerName || !passengerEmail || !passengerPhone) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all passenger details",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const cartItem: any = {
+      id: `cart-${Date.now()}`,
+      booking_type: bookingType,
+      from_location: booking.from || booking.fromCode,
+      to_location: booking.to || booking.toCode,
+      departure_date: booking.date,
+      departure_time: booking.departureTime,
+      arrival_time: booking.arrivalTime,
+      price_inr: getPrice(),
+      passenger_name: passengerName,
+      passenger_email: passengerEmail,
+      passenger_phone: passengerPhone,
+    };
+
+    if (bookingType === 'flight') {
+      cartItem.service_name = booking.airline;
+      cartItem.service_number = booking.flightNumber;
+      cartItem.seat_number = `${Math.floor(Math.random() * 30) + 1}${String.fromCharCode(65 + Math.floor(Math.random() * 6))}`;
+      cartItem.class_type = 'Economy';
+      cartItem.duration = booking.duration;
+    } else if (bookingType === 'train') {
+      cartItem.service_name = booking.name;
+      cartItem.service_number = booking.trainNumber;
+      cartItem.seat_number = `${booking.selectedClass}-${Math.floor(Math.random() * 100) + 1}`;
+      cartItem.class_type = booking.selectedClass;
+      cartItem.duration = booking.duration;
+    } else if (bookingType === 'bus') {
+      cartItem.service_name = booking.operator;
+      cartItem.service_number = booking.busType;
+      cartItem.seat_number = `${Math.floor(Math.random() * 40) + 1}`;
+      cartItem.class_type = booking.busType;
+      cartItem.duration = booking.duration;
+    }
+
+    addToCart(cartItem);
+    
+    toast({
+      title: "Added to Cart!",
+      description: "Continue booking or checkout from cart",
+    });
+
+    navigate("/book-transport");
   };
 
   const handlePayment = async () => {
@@ -240,15 +296,27 @@ export default function BookConfirm() {
                   </div>
                 </div>
                 <Separator />
-                <Button 
-                  className="w-full" 
-                  size="lg"
-                  onClick={handlePayment}
-                  disabled={loading}
-                >
-                  <CreditCard className="mr-2 h-5 w-5" />
-                  {loading ? 'Processing...' : 'Proceed to Payment'}
-                </Button>
+                <div className="space-y-2">
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={handlePayment}
+                    disabled={loading}
+                  >
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    {loading ? 'Processing...' : 'Book Now'}
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="w-full" 
+                    size="lg"
+                    onClick={handleAddToCart}
+                    disabled={loading}
+                  >
+                    <ShoppingCart className="mr-2 h-5 w-5" />
+                    Add to Cart
+                  </Button>
+                </div>
                 <p className="text-xs text-center text-muted-foreground">
                   Secure payment powered by Razorpay
                 </p>

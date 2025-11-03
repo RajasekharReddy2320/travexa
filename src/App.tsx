@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { CartProvider } from "@/contexts/CartContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -11,7 +12,6 @@ import Dashboard from "./pages/Dashboard";
 import PlanTrip from "./pages/PlanTrip";
 import Book from "./pages/Book";
 import Profile from "./pages/Profile";
-import Messages from "./pages/Messages";
 import CreateTrip from "./pages/CreateTrip";
 import Wanderlust from "./pages/Wanderlust";
 import Connections from "./pages/Connections";
@@ -20,40 +20,43 @@ import BookTransport from "./pages/BookTransport";
 import BookConfirm from "./pages/BookConfirm";
 import MyTickets from "./pages/MyTickets";
 import TicketDetails from "./pages/TicketDetails";
+import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/plan-trip" element={<PlanTrip />} />
-          <Route path="/create-trip" element={<CreateTrip />} />
-          <Route path="/wanderlust" element={<Wanderlust />} />
-          <Route path="/connections" element={<Connections />} />
-          <Route path="/search" element={<SearchUsers />} />
-          <Route path="/book-transport" element={<BookTransport />} />
-          <Route path="/book-confirm" element={<BookConfirm />} />
-          <Route path="/my-tickets" element={<MyTickets />} />
-          <Route path="/ticket-details" element={<TicketDetails />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/:userId" element={<Profile />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/book" element={<Book />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <CartProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/plan-trip" element={<PlanTrip />} />
+            <Route path="/create-trip" element={<CreateTrip />} />
+            <Route path="/wanderlust" element={<Wanderlust />} />
+            <Route path="/connections" element={<Connections />} />
+            <Route path="/search" element={<SearchUsers />} />
+            <Route path="/book-transport" element={<BookTransport />} />
+            <Route path="/book-confirm" element={<BookConfirm />} />
+            <Route path="/my-tickets" element={<MyTickets />} />
+            <Route path="/ticket-details" element={<TicketDetails />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:userId" element={<Profile />} />
+            <Route path="/book" element={<Book />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </CartProvider>
   </QueryClientProvider>
 );
 
