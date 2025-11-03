@@ -78,8 +78,12 @@ export default function QRScanner() {
         },
         async (decodedText) => {
           // Stop scanning after successful scan
-          html5QrCode.stop();
-          setScanning(false);
+          try {
+            await html5QrCode.stop();
+            setScanning(false);
+          } catch (stopErr) {
+            console.log("Scanner already stopped");
+          }
           
           try {
             // Parse QR data
@@ -105,7 +109,7 @@ export default function QRScanner() {
           }
         },
         (errorMessage) => {
-          console.log("QR Scan error:", errorMessage);
+          // Silently handle scanning errors - these are normal when no QR is found
         }
       );
 
@@ -113,13 +117,19 @@ export default function QRScanner() {
     } catch (err) {
       console.error("Error starting scanner:", err);
       setError("Failed to start camera. Please check permissions.");
+      setScanning(false);
     }
   };
 
-  const stopScanning = () => {
-    if (scannerRef.current) {
-      scannerRef.current.stop();
-      setScanning(false);
+  const stopScanning = async () => {
+    if (scannerRef.current && scanning) {
+      try {
+        await scannerRef.current.stop();
+        setScanning(false);
+      } catch (err) {
+        console.log("Scanner already stopped");
+        setScanning(false);
+      }
     }
   };
 
@@ -132,11 +142,13 @@ export default function QRScanner() {
 
   useEffect(() => {
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop();
+      if (scannerRef.current && scanning) {
+        scannerRef.current.stop().catch(() => {
+          // Ignore errors on cleanup
+        });
       }
     };
-  }, []);
+  }, [scanning]);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
