@@ -9,6 +9,39 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Plane, Train, Bus, Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+// Security: Search validation schema
+const searchSchema = z.object({
+  from: z.string()
+    .trim()
+    .min(2, "Origin must be at least 2 characters")
+    .max(100, "Origin must be less than 100 characters")
+    .regex(/^[a-zA-Z\s]+$/, "Location can only contain letters and spaces"),
+  to: z.string()
+    .trim()
+    .min(2, "Destination must be at least 2 characters")
+    .max(100, "Destination must be less than 100 characters")
+    .regex(/^[a-zA-Z\s]+$/, "Location can only contain letters and spaces"),
+  date: z.string()
+    .refine((d) => !isNaN(Date.parse(d)), "Invalid date format")
+    .refine((d) => {
+      const selectedDate = new Date(d);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return selectedDate >= today;
+    }, "Date cannot be in the past")
+    .refine((d) => {
+      const selectedDate = new Date(d);
+      const maxDate = new Date();
+      maxDate.setFullYear(maxDate.getFullYear() + 1);
+      return selectedDate <= maxDate;
+    }, "Cannot book more than 1 year in advance"),
+  passengers: z.number()
+    .int("Must be a whole number")
+    .min(1, "At least 1 passenger required")
+    .max(9, "Maximum 9 passengers allowed")
+});
 
 export default function BookTransport() {
   const navigate = useNavigate();
@@ -28,10 +61,18 @@ export default function BookTransport() {
   const [buses, setBuses] = useState<any[]>([]);
 
   const handleSearch = async () => {
-    if (!from || !to || !date) {
+    // Security: Validate search parameters
+    const validation = searchSchema.safeParse({
+      from,
+      to,
+      date,
+      passengers: parseInt(passengers) || 1
+    });
+
+    if (!validation.success) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all fields",
+        title: "Invalid Search",
+        description: validation.error.issues[0].message,
         variant: "destructive",
       });
       return;
@@ -39,6 +80,7 @@ export default function BookTransport() {
 
     setLoading(true);
     try {
+      const validatedData = validation.data;
       let functionName = '';
       let setResults: (data: any[]) => void = () => {};
       
@@ -53,8 +95,14 @@ export default function BookTransport() {
         setResults = setBuses;
       }
 
+      // Use validated data
       const { data, error } = await supabase.functions.invoke(functionName, {
-        body: { from, to, date, passengers: parseInt(passengers) }
+        body: { 
+          from: validatedData.from, 
+          to: validatedData.to, 
+          date: validatedData.date, 
+          passengers: validatedData.passengers 
+        }
       });
 
       if (error) throw error;
@@ -67,10 +115,10 @@ export default function BookTransport() {
         description: `Found ${data[resultsKey]?.length || 0} options`,
       });
     } catch (error: any) {
-      console.error('Search error:', error);
+      // Security: Don't log detailed errors
       toast({
         title: "Search Failed",
-        description: error.message || "Failed to search. Please try again.",
+        description: "Failed to search. Please try again.",
         variant: "destructive",
       });
     } finally {

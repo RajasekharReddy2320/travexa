@@ -10,6 +10,24 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import { Plane, Train, Bus, CreditCard, ShoppingCart } from "lucide-react";
+import { z } from "zod";
+
+// Security: Input validation schema
+const passengerSchema = z.object({
+  name: z.string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters")
+    .regex(/^[a-zA-Z\s.'-]+$/, "Name can only contain letters, spaces, dots, hyphens and apostrophes"),
+  email: z.string()
+    .trim()
+    .email("Invalid email format")
+    .max(255, "Email must be less than 255 characters"),
+  phone: z.string()
+    .trim()
+    .regex(/^\+?[1-9]\d{9,14}$/, "Invalid phone number. Use format: +91XXXXXXXXXX or 10-digit number")
+    .max(15, "Phone number must be less than 15 characters")
+});
 
 export default function BookConfirm() {
   const location = useLocation();
@@ -36,10 +54,17 @@ export default function BookConfirm() {
   };
 
   const handleAddToCart = () => {
-    if (!passengerName || !passengerEmail || !passengerPhone) {
+    // Security: Validate passenger details
+    const validation = passengerSchema.safeParse({
+      name: passengerName,
+      email: passengerEmail,
+      phone: passengerPhone
+    });
+
+    if (!validation.success) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all passenger details",
+        title: "Invalid Details",
+        description: validation.error.issues[0].message,
         variant: "destructive",
       });
       return;
@@ -90,10 +115,17 @@ export default function BookConfirm() {
   };
 
   const handlePayment = async () => {
-    if (!passengerName || !passengerEmail || !passengerPhone) {
+    // Security: Validate passenger details
+    const validation = passengerSchema.safeParse({
+      name: passengerName,
+      email: passengerEmail,
+      phone: passengerPhone
+    });
+
+    if (!validation.success) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all passenger details",
+        title: "Invalid Details",
+        description: validation.error.issues[0].message,
         variant: "destructive",
       });
       return;
@@ -101,12 +133,15 @@ export default function BookConfirm() {
 
     setLoading(true);
     try {
-      // Create booking
+      // Use validated data
+      const validatedData = validation.data;
+      
+      // Create booking with validated data
       const bookingData: any = {
         booking_type: bookingType,
-        passenger_name: passengerName,
-        passenger_email: passengerEmail,
-        passenger_phone: passengerPhone,
+        passenger_name: validatedData.name,
+        passenger_email: validatedData.email,
+        passenger_phone: validatedData.phone,
         from_location: booking.from || booking.fromCode,
         to_location: booking.to || booking.toCode,
         departure_date: booking.date,
@@ -160,10 +195,10 @@ export default function BookConfirm() {
 
       navigate('/my-tickets');
     } catch (error: any) {
-      console.error('Booking error:', error);
+      // Security: Don't log detailed errors to console in production
       toast({
         title: "Booking Failed",
-        description: error.message || "Failed to complete booking. Please try again.",
+        description: "Failed to complete booking. Please try again.",
         variant: "destructive",
       });
     } finally {
