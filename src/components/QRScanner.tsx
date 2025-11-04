@@ -90,8 +90,11 @@ export default function QRScanner() {
           }
           
           try {
-            // Parse QR data
-            const qrData = JSON.parse(atob(decodedText));
+            // Security: Parse signed QR data
+            const signedQR = JSON.parse(atob(decodedText));
+            
+            // Handle both old format (for backwards compatibility) and new signed format
+            const qrData = signedQR.d || signedQR;
             setScannedData(qrData);
 
             // Check if it's a multi-segment trip or single booking

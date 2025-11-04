@@ -1,9 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Security: Input validation schema
+const itineraryRequestSchema = z.object({
+  destination: z.string().trim().min(2).max(100),
+  startDate: z.string().refine((d) => !isNaN(Date.parse(d)), 'Invalid start date'),
+  endDate: z.string().refine((d) => !isNaN(Date.parse(d)), 'Invalid end date'),
+  budgetINR: z.number().positive().max(10000000).optional().nullable(),
+  groupSize: z.number().int().min(1).max(50),
+  interests: z.array(z.string().max(50)).max(20),
+  plannerMode: z.enum(['comfort', 'time', 'budget']).optional()
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,13 +23,54 @@ serve(async (req) => {
   }
 
   try {
-    const { destination, startDate, endDate, budgetINR, groupSize, interests, plannerMode } = await req.json();
+    const requestData = await req.json();
     
-    console.log('Generating itinerary for:', { destination, startDate, endDate, budgetINR, groupSize, interests, plannerMode });
+    // Security: Validate inputs
+    const validation = itineraryRequestSchema.safeParse(requestData);
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request',
+          details: validation.error.issues[0].message 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { destination, startDate, endDate, budgetINR, groupSize, interests, plannerMode } = validation.data;
+    
+    // Security: Validate date logic
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (end <= start) {
+      return new Response(
+        JSON.stringify({ error: 'End date must be after start date' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const tripDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    if (tripDays > 60) {
+      return new Response(
+        JSON.stringify({ error: 'Trip duration cannot exceed 60 days' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Security: Minimal logging without PII
+    console.log('[Itinerary Request]', {
+      destination,
+      duration_days: tripDays,
+      timestamp: new Date().toISOString()
+    });
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      console.error('[Config Error] LOVABLE_API_KEY not configured');
+      return new Response(
+        JSON.stringify({ error: 'Service configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Construct system prompt based on planner mode
@@ -39,7 +92,7 @@ serve(async (req) => {
 - Budget: ${budgetINR ? `₹${budgetINR}` : 'Flexible'}
 - Group Size: ${groupSize} ${groupSize === 1 ? 'person' : 'people'}
 - Interests: ${interests.join(', ')}
-- Planner Mode: ${plannerMode}
+- Planner Mode: ${plannerMode || 'balanced'}
 
 Provide a day-by-day breakdown with activities, estimated costs in INR, and travel tips. Format as valid JSON only.`;
 
@@ -59,8 +112,11 @@ Provide a day-by-day breakdown with activities, estimated costs in INR, and trav
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
+      // Security: Log error code only, not full response
+      console.error('[AI Gateway Error]', {
+        status: response.status,
+        timestamp: new Date().toISOString()
+      });
       
       if (response.status === 429) {
         return new Response(
@@ -76,11 +132,14 @@ Provide a day-by-day breakdown with activities, estimated costs in INR, and trav
         );
       }
       
-      throw new Error(`AI Gateway error: ${response.status}`);
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate itinerary' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const data = await response.json();
-    console.log('AI response received');
+    console.log('[AI Response] Itinerary generated successfully');
     
     let itinerary = data.choices[0].message.content;
     
@@ -100,9 +159,14 @@ Provide a day-by-day breakdown with activities, estimated costs in INR, and trav
       }
     );
   } catch (error: any) {
-    console.error('Error in generate-itinerary function:', error);
+    // Security: Generic error message to client
+    console.error('[Server Error]', {
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+    
     return new Response(
-      JSON.stringify({ error: error.message || 'Failed to generate itinerary' }),
+      JSON.stringify({ error: 'Failed to generate itinerary' }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

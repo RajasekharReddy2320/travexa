@@ -1,9 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Security: Input validation schema
+const searchSchema = z.object({
+  from: z.string().trim().min(2).max(100),
+  to: z.string().trim().min(2).max(100),
+  date: z.string().refine((d) => !isNaN(Date.parse(d)), 'Invalid date')
+});
 
 // Fake bus data generator
 const operators = ['RedBus', 'VRL Travels', 'SRS Travels', 'Orange Travels', 'Parveen Travels', 'Raj Travels', 'KPN Travels'];
@@ -54,13 +62,28 @@ serve(async (req) => {
   }
 
   try {
-    const { from, to, date } = await req.json();
+    const requestData = await req.json();
     
-    console.log('Searching buses:', { from, to, date });
-
-    if (!from || !to || !date) {
-      throw new Error('Missing required parameters: from, to, date');
+    // Security: Validate inputs
+    const validation = searchSchema.safeParse(requestData);
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid search parameters',
+          details: validation.error.issues[0].message 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    const { from, to, date } = validation.data;
+    
+    // Security: Minimal logging
+    console.log('[Bus Search]', {
+      route: `${from}-${to}`,
+      date,
+      timestamp: new Date().toISOString()
+    });
 
     const buses = generateBuses(from, to, date);
 
@@ -72,9 +95,13 @@ serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error('Error in search-buses function:', error);
+    // Security: Generic error message
+    console.error('[Server Error]', {
+      timestamp: new Date().toISOString()
+    });
+    
     return new Response(
-      JSON.stringify({ error: error.message || 'Failed to search buses' }),
+      JSON.stringify({ error: 'Failed to search buses' }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

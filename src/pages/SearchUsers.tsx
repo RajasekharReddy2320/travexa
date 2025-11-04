@@ -60,9 +60,9 @@ const SearchUsers = () => {
     setLoading(true);
 
     try {
-      // Search profiles by name or interests
+      // Security: Use public_profiles view to avoid exposing email/phone
       const { data: profiles, error } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("*")
         .neq("id", currentUserId)
         .or(`full_name.ilike.%${searchQuery}%,interests.cs.{${searchQuery}}`)
@@ -91,7 +91,7 @@ const SearchUsers = () => {
 
       setResults(resultsWithStatus);
     } catch (error) {
-      console.error("Search error:", error);
+      // Security: Don't log detailed errors
       toast({
         title: "Error",
         description: "Failed to search users",

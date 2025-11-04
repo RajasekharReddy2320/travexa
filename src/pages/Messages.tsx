@@ -10,6 +10,15 @@ import { useToast } from "@/hooks/use-toast";
 import { MessageSquare, Send, Search } from "lucide-react";
 import DashboardNav from "@/components/DashboardNav";
 import { format } from "date-fns";
+import { z } from "zod";
+
+// Security: Message validation schema
+const messageSchema = z.object({
+  content: z.string()
+    .trim()
+    .min(1, "Message cannot be empty")
+    .max(2000, "Message too long (max 2000 characters)")
+});
 
 interface Message {
   id: string;
@@ -117,13 +126,14 @@ const Messages = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // Security: Use public_profiles view for user discovery
     const { data, error } = await supabase
-      .from("profiles")
+      .from("public_profiles")
       .select("id, full_name, avatar_url")
       .neq("id", user.id);
 
     if (error) {
-      console.error("Error loading users:", error);
+      // Security: Don't log detailed errors
       return;
     }
 
@@ -142,7 +152,7 @@ const Messages = () => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error loading messages:", error);
+      // Security: Don't log detailed errors
       return;
     }
 
@@ -213,14 +223,26 @@ const Messages = () => {
   };
 
   const sendMessage = async () => {
-    if (!selectedUser || !messageText.trim()) return;
+    if (!selectedUser) return;
+
+    // Security: Validate message content
+    const validation = messageSchema.safeParse({ content: messageText });
+    
+    if (!validation.success) {
+      toast({
+        title: "Invalid Message",
+        description: validation.error.issues[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
 
     const { error } = await supabase
       .from("messages")
       .insert({
         sender_id: currentUserId,
         recipient_id: selectedUser.id,
-        content: messageText.trim(),
+        content: validation.data.content,
       });
 
     if (error) {

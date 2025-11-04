@@ -11,6 +11,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Bookmark, MapPin, Calendar, Users, Search, MessageCircle, Send } from "lucide-react";
 import { format } from "date-fns";
+import { z } from "zod";
+
+// Security: Message validation schema
+const messageSchema = z.object({
+  content: z.string()
+    .trim()
+    .min(1, "Message cannot be empty")
+    .max(2000, "Message too long (max 2000 characters)")
+});
 
 interface Profile {
   id: string;
@@ -126,13 +135,14 @@ const Wanderlust = () => {
   };
 
   const loadUsers = async () => {
+    // Security: Use public_profiles view to avoid exposing email/phone
     const { data, error } = await supabase
-      .from("profiles")
+      .from("public_profiles")
       .select("id, full_name, avatar_url, home_location")
       .limit(20);
 
     if (error) {
-      console.error("Error loading users:", error);
+      // Security: Don't log detailed errors
       return;
     }
 
@@ -157,10 +167,10 @@ const Wanderlust = () => {
       return;
     }
 
-    // Load profiles for all trips
+    // Load profiles for all trips (users who created public trips)
     const userIds = [...new Set(data.map(trip => trip.user_id))];
     const { data: profiles } = await supabase
-      .from("profiles")
+      .from("public_profiles")
       .select("id, full_name, avatar_url, home_location")
       .in("id", userIds);
 
@@ -329,7 +339,19 @@ const Wanderlust = () => {
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedUser) return;
+    if (!selectedUser) return;
+
+    // Security: Validate message content
+    const validation = messageSchema.safeParse({ content: newMessage });
+    
+    if (!validation.success) {
+      toast({
+        title: "Invalid Message",
+        description: validation.error.issues[0].message,
+        variant: "destructive"
+      });
+      return;
+    }
 
     // Check if user can message
     const { data: targetProfile } = await supabase
@@ -358,7 +380,7 @@ const Wanderlust = () => {
     await supabase.from("messages").insert({
       sender_id: currentUserId,
       recipient_id: selectedUser.id,
-      content: newMessage.trim(),
+      content: validation.data.content,
     });
 
     setNewMessage("");
