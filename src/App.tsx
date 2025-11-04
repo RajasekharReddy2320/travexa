@@ -21,6 +21,7 @@ import BookConfirm from "./pages/BookConfirm";
 import MyTickets from "./pages/MyTickets";
 import TicketDetails from "./pages/TicketDetails";
 import Cart from "./pages/Cart";
+import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/my-tickets" element={<MyTickets />} />
             <Route path="/ticket-details" element={<TicketDetails />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/messages" element={<Messages />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/book" element={<Book />} />

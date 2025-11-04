@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, User, Plane, Compass, UserCheck, Ticket, ShoppingCart, Menu, X } from "lucide-react";
+import { Search, User, Plane, Compass, UserCheck, Ticket, ShoppingCart, Menu, X, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -89,6 +89,18 @@ const DashboardNav = () => {
             >
               <UserCheck className="h-4 w-4" />
               <span className="hidden lg:inline-block">Connections</span>
+            </Link>
+
+            <Link
+              to="/messages"
+              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+                isActive("/messages")
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent/50"
+              }`}
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden lg:inline-block">Messages</span>
             </Link>
 
             <Link
