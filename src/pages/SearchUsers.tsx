@@ -79,7 +79,7 @@ const SearchUsers = () => {
           });
 
           const connectionStatus = statusData || 'none';
-          const canMessage = profile.is_public || connectionStatus === 'connected';
+          const canMessage = connectionStatus === 'connected';
 
           return {
             ...profile,
@@ -210,7 +210,7 @@ const SearchUsers = () => {
                         )}
                       </div>
                       
-                      {profile.is_public || profile.connectionStatus === 'connected' ? (
+                      {profile.connectionStatus === 'connected' ? (
                         <>
                           {profile.bio && (
                             <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
@@ -234,7 +234,7 @@ const SearchUsers = () => {
                         </>
                       ) : (
                         <p className="text-sm text-muted-foreground">
-                          Private profile • Connect to view details
+                          Connect to view interests and bio
                         </p>
                       )}
                     </div>
