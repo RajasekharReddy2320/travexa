@@ -88,7 +88,7 @@ const Profile = () => {
       .eq("id", targetId)
       .single();
 
-    setCanMessage(targetProfile?.is_public || status === 'connected');
+    setCanMessage(connectionStatus === 'connected');
   };
 
   const loadProfile = async (targetUserId: string) => {
@@ -366,15 +366,24 @@ const Profile = () => {
               </Avatar>
               <div className="flex-1">
                 <h2 className="text-2xl font-bold mb-1">{profile.full_name || "User"}</h2>
-                <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                  <Mail className="h-4 w-4" />
-                  {profile.email}
-                </div>
-                {profile.phone && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="h-4 w-4" />
-                    {profile.phone}
-                  </div>
+                {isOwnProfile && (
+                  <>
+                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                      <Mail className="h-4 w-4" />
+                      {profile.email}
+                    </div>
+                    {profile.phone && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Phone className="h-4 w-4" />
+                        {profile.phone}
+                      </div>
+                    )}
+                  </>
+                )}
+                {!isOwnProfile && connectionStatus !== 'connected' && (
+                  <p className="text-sm text-muted-foreground">
+                    Connect to view profile details
+                  </p>
                 )}
               </div>
               <div className="flex gap-2">
@@ -426,13 +435,16 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {/* Profile Details */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-            <CardDescription>Your personal details and preferences</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        {/* Profile Details - Only show if own profile or connected */}
+        {(isOwnProfile || connectionStatus === 'connected') && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Personal Information</CardTitle>
+              <CardDescription>
+                {isOwnProfile ? "Your personal details and preferences" : `${profile.full_name || "User"}'s profile`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
             <div>
               <Label htmlFor="full_name">Full Name</Label>
               <Input
@@ -550,6 +562,7 @@ const Profile = () => {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Privacy Settings */}
         {isOwnProfile && (
@@ -601,65 +614,72 @@ const Profile = () => {
           </Card>
         )}
 
-        {/* Languages */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5" />
-              Languages Spoken
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {profile.languages_spoken && profile.languages_spoken.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {profile.languages_spoken.map((lang) => (
-                  <Badge key={lang} variant="secondary">{lang}</Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">No languages added yet</p>
-            )}
-          </CardContent>
-        </Card>
+        {/* Languages - Only show if own profile or connected */}
+        {(isOwnProfile || connectionStatus === 'connected') && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                Languages Spoken
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {profile.languages_spoken && profile.languages_spoken.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {profile.languages_spoken.map((lang) => (
+                    <Badge key={lang} variant="secondary">{lang}</Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">No languages added yet</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Interests */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Travel Interests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {profile.interests && profile.interests.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {profile.interests.map((interest) => (
-                  <Badge key={interest} variant="outline">{interest}</Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">No interests added yet</p>
-            )}
-          </CardContent>
-        </Card>
+        {/* Interests - Only show if own profile or connected */}
+        {(isOwnProfile || connectionStatus === 'connected') && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Travel Interests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {profile.interests && profile.interests.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {profile.interests.map((interest) => (
+                    <Badge key={interest} variant="outline">{interest}</Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">No interests added yet</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Travel Preferences */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Travel Preferences</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {profile.travel_preferences && profile.travel_preferences.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {profile.travel_preferences.map((pref) => (
-                  <Badge key={pref}>{pref}</Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">No preferences added yet</p>
-            )}
-          </CardContent>
-        </Card>
+        {/* Travel Preferences - Only show if own profile or connected */}
+        {(isOwnProfile || connectionStatus === 'connected') && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Travel Preferences</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {profile.travel_preferences && profile.travel_preferences.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {profile.travel_preferences.map((pref) => (
+                    <Badge key={pref}>{pref}</Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">No preferences added yet</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Activity Section */}
-        <Card className="mb-6">
+        {/* Activity Section - Only show if own profile or connected */}
+        {(isOwnProfile || connectionStatus === 'connected') && (
+          <Card className="mb-6">
           <CardHeader>
             <CardTitle>Your Activity</CardTitle>
           </CardHeader>
@@ -716,6 +736,7 @@ const Profile = () => {
             </div>
           </CardContent>
         </Card>
+        )}
       </main>
     </div>
   );
