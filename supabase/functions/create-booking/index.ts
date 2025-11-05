@@ -10,7 +10,7 @@ const corsHeaders = {
 
 // Security: Server-side input validation
 const bookingSchema = z.object({
-  booking_type: z.enum(['flight', 'train', 'bus'], {
+  booking_type: z.enum(['flight', 'train', 'bus', 'hotel'], {
     errorMap: () => ({ message: 'Invalid booking type' })
   }),
   passenger_name: z.string()
@@ -23,8 +23,8 @@ const bookingSchema = z.object({
     .max(255, 'Email too long'),
   passenger_phone: z.string()
     .trim()
-    .regex(/^\+?[1-9]\d{9,14}$/, 'Invalid phone number format')
-    .max(15, 'Phone number too long'),
+    .min(10, 'Phone number too short')
+    .max(20, 'Phone number too long'),
   from_location: z.string().trim().min(2).max(100),
   to_location: z.string().trim().min(2).max(100),
   departure_date: z.string().refine((d) => !isNaN(Date.parse(d)), 'Invalid departure date'),
