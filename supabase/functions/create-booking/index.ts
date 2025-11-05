@@ -36,7 +36,8 @@ const bookingSchema = z.object({
   seat_number: z.string().trim().max(20).optional(),
   class_type: z.string().trim().max(50).optional(),
   price_inr: z.number().positive('Price must be positive').max(1000000, 'Price too high'),
-  details: z.record(z.any()).optional()
+  details: z.record(z.any()).optional(),
+  trip_group_id: z.string().uuid().optional()
 });
 
 serve(async (req) => {
@@ -150,7 +151,8 @@ serve(async (req) => {
         price_inr: validatedData.price_inr,
         payment_status: 'pending',
         booking_details: validatedData.details || {},
-        qr_code: qrCode
+        qr_code: qrCode,
+        trip_group_id: validatedData.trip_group_id || null
       })
       .select()
       .single();

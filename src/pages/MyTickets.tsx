@@ -89,38 +89,53 @@ export default function MyTickets() {
 
   const filteredBookings = filter === "all" ? bookings : bookings.filter(b => b.booking_type === filter);
 
+  // Group bookings by trip_group_id
+  const groupedBookings = filteredBookings.reduce((acc: any, booking: any) => {
+    const groupId = booking.trip_group_id || booking.id;
+    if (!acc[groupId]) {
+      acc[groupId] = [];
+    }
+    acc[groupId].push(booking);
+    return acc;
+  }, {});
+
+  const tripGroups = Object.values(groupedBookings) as any[][];
+
   const handleViewTicket = (booking: any) => {
     navigate('/ticket-details', { state: { booking } });
   };
 
   const handleCancelTrip = async (booking: any) => {
     try {
-      const { error: bookingError } = await supabase
-        .from('bookings')
-        .update({ 
-          status: 'cancelled',
-          cancelled_at: new Date().toISOString()
-        })
-        .eq('id', booking.id);
-
-      if (bookingError) throw bookingError;
-
-      // If multi-segment, cancel all segments
+      // Cancel all bookings with the same trip_group_id
       if (booking.trip_group_id) {
-        const { error: segmentsError } = await supabase
-          .from('trip_segments')
+        const { error } = await supabase
+          .from('bookings')
           .update({ 
             status: 'cancelled',
             cancelled_at: new Date().toISOString()
           })
           .eq('trip_group_id', booking.trip_group_id);
 
-        if (segmentsError) throw segmentsError;
+        if (error) throw error;
+      } else {
+        // Cancel single booking
+        const { error } = await supabase
+          .from('bookings')
+          .update({ 
+            status: 'cancelled',
+            cancelled_at: new Date().toISOString()
+          })
+          .eq('id', booking.id);
+
+        if (error) throw error;
       }
 
       toast({
         title: "Trip Cancelled",
-        description: "Your booking has been cancelled successfully",
+        description: booking.trip_group_id 
+          ? "All bookings in this trip have been cancelled successfully"
+          : "Your booking has been cancelled successfully",
       });
 
       fetchBookings();
@@ -229,7 +244,7 @@ export default function MyTickets() {
             </div>
 
         <div className="space-y-4">
-          {filteredBookings.length === 0 ? (
+          {tripGroups.length === 0 ? (
             <Card>
               <CardContent className="py-16 text-center">
                 <div className="flex flex-col items-center gap-4">
@@ -249,90 +264,160 @@ export default function MyTickets() {
               </CardContent>
             </Card>
           ) : (
-            filteredBookings.map((booking) => {
-              const Icon = getIcon(booking.booking_type);
+            tripGroups.map((group, groupIndex) => {
+              const isMultiBooking = group.length > 1;
+              const totalPrice = group.reduce((sum, b) => sum + parseFloat(b.price_inr), 0);
+              const firstBooking = group[0];
+              
               return (
-                <Card key={booking.id} className="hover:shadow-lg transition-shadow">
+                <Card key={groupIndex} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Icon className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-lg">{booking.service_name}</h3>
-                          <p className="text-sm text-muted-foreground">{booking.service_number}</p>
-                        </div>
+                      <div>
+                        {isMultiBooking ? (
+                          <>
+                            <h3 className="font-semibold text-lg">Complete Trip Package</h3>
+                            <p className="text-sm text-muted-foreground">{group.length} bookings</p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-primary/10 rounded-lg">
+                                {(() => {
+                                  const Icon = getIcon(firstBooking.booking_type);
+                                  return <Icon className="h-5 w-5 text-primary" />;
+                                })()}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-lg">{firstBooking.service_name}</h3>
+                                <p className="text-sm text-muted-foreground">{firstBooking.service_number}</p>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                       <div className="flex gap-2">
-                        <Badge className={getStatusColor(booking.status)}>
-                          {booking.status}
+                        <Badge className={getStatusColor(firstBooking.status)}>
+                          {firstBooking.status}
                         </Badge>
-                        <Badge className={getPaymentStatusColor(booking.payment_status)}>
-                          {booking.payment_status}
+                        <Badge className={getPaymentStatusColor(firstBooking.payment_status)}>
+                          {firstBooking.payment_status}
                         </Badge>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">From</p>
-                          <p className="font-medium">{booking.from_location}</p>
+                    {isMultiBooking && (
+                      <div className="mb-4 p-4 bg-muted/50 rounded-lg">
+                        <p className="text-sm font-medium mb-3">Your trip includes:</p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          {group.map((booking, idx) => {
+                            const Icon = getIcon(booking.booking_type);
+                            return (
+                              <div key={idx} className="flex items-center gap-2">
+                                <Icon className="h-4 w-4 text-primary" />
+                                <span className="text-sm capitalize">{booking.booking_type}</span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">To</p>
-                          <p className="font-medium">{booking.to_location}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Calendar className="h-4 w-4 mt-1 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Date</p>
-                          <p className="font-medium">
-                            {new Date(booking.departure_date).toLocaleDateString('en-IN')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <User className="h-4 w-4 mt-1 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Passenger</p>
-                          <p className="font-medium">{booking.passenger_name}</p>
-                        </div>
-                      </div>
+                    )}
+                    
+                    <div className="space-y-4">
+                      {group.map((booking, idx) => {
+                        const Icon = getIcon(booking.booking_type);
+                        return (
+                          <div key={booking.id} className={isMultiBooking ? "p-4 border rounded-lg" : ""}>
+                            {isMultiBooking && (
+                              <div className="flex items-center gap-2 mb-3">
+                                <Icon className="h-4 w-4 text-primary" />
+                                <h4 className="font-semibold">{booking.service_name}</h4>
+                                <span className="text-sm text-muted-foreground">({booking.service_number})</span>
+                              </div>
+                            )}
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div className="flex items-start gap-2">
+                                <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">From</p>
+                                  <p className="font-medium">{booking.from_location}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-start gap-2">
+                                <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">To</p>
+                                  <p className="font-medium">{booking.to_location}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-start gap-2">
+                                <Calendar className="h-4 w-4 mt-1 text-muted-foreground" />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">Date</p>
+                                  <p className="font-medium">
+                                    {new Date(booking.departure_date).toLocaleDateString('en-IN')}
+                                  </p>
+                                </div>
+                              </div>
+                              {!isMultiBooking && (
+                                <div className="flex items-start gap-2">
+                                  <User className="h-4 w-4 mt-1 text-muted-foreground" />
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Passenger</p>
+                                    <p className="font-medium">{booking.passenger_name}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {isMultiBooking && (
+                              <div className="mt-3 flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">Booking Ref:</span>
+                                <span className="font-mono">{booking.booking_reference}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
+
                     <div className="mt-4 pt-4 border-t">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm text-muted-foreground">Total Amount</p>
-                          <p className="text-2xl font-bold">₹{booking.price_inr.toLocaleString("en-IN")}</p>
+                          <p className="text-2xl font-bold">₹{totalPrice.toLocaleString("en-IN")}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm text-muted-foreground">Booking Ref</p>
-                          <p className="font-mono font-medium">{booking.booking_reference}</p>
-                        </div>
+                        {!isMultiBooking && (
+                          <div className="text-right">
+                            <p className="text-sm text-muted-foreground">Booking Ref</p>
+                            <p className="font-mono font-medium">{firstBooking.booking_reference}</p>
+                          </div>
+                        )}
+                        {isMultiBooking && (
+                          <div className="text-right">
+                            <p className="text-sm text-muted-foreground">Passenger</p>
+                            <p className="font-medium">{firstBooking.passenger_name}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
+                    
                     <div className="flex gap-2 mt-4">
                       <Button
                         variant="outline"
                         className="flex-1"
-                        onClick={() => handleViewTicket(booking)}
+                        onClick={() => handleViewTicket(firstBooking)}
                       >
                         <QrCode className="mr-2 h-4 w-4" />
-                        View QR Code
+                        View {isMultiBooking ? 'Tickets' : 'QR Code'}
                       </Button>
                       <Button variant="outline" className="flex-1">
                         <Download className="mr-2 h-4 w-4" />
-                        Download Ticket
+                        Download {isMultiBooking ? 'All Tickets' : 'Ticket'}
                       </Button>
-                      {booking.status === 'confirmed' && (
+                      {firstBooking.status === 'confirmed' && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="destructive" size="icon">
@@ -344,12 +429,12 @@ export default function MyTickets() {
                               <AlertDialogTitle>Cancel Trip?</AlertDialogTitle>
                               <AlertDialogDescription>
                                 Are you sure you want to cancel this booking? This action cannot be undone.
-                                {booking.booking_type === 'multi-segment' && ' All segments of this trip will be cancelled.'}
+                                {isMultiBooking && ' All bookings in this trip will be cancelled.'}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleCancelTrip(booking)}>
+                              <AlertDialogAction onClick={() => handleCancelTrip(firstBooking)}>
                                 Cancel Trip
                               </AlertDialogAction>
                             </AlertDialogFooter>

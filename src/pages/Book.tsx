@@ -190,6 +190,9 @@ export default function Book() {
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
 
+      // Generate a unique trip group ID to link all bookings together
+      const tripGroupId = crypto.randomUUID();
+
       // Create bookings for each selection
       const bookingPromises = selectedBookings.map(async (selection) => {
         let bookingData: any = {
@@ -205,6 +208,7 @@ export default function Book() {
           service_number: 'SVC001',
           price_inr: 0,
           booking_type: 'flight',
+          trip_group_id: tripGroupId, // Link all bookings together
         };
 
         if (selection.type === 'flight') {
