@@ -517,7 +517,7 @@ export default function PlanTrip() {
                       <Button onClick={handleSaveTrip} className="flex-1">
                         Save Trip
                       </Button>
-                      <Button variant="outline" onClick={() => navigate('/book', { state: { itinerary } })}>
+                      <Button variant="outline" onClick={() => navigate('/book', { state: { itinerary, destination } })}>
                         Book Now
                       </Button>
                     </div>
