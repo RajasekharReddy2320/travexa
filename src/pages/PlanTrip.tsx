@@ -394,14 +394,24 @@ export default function PlanTrip() {
                 {!loading && itinerary && (
                   <div className="space-y-4">
                     <div className="prose prose-sm max-w-none">
-                      {itinerary.overview && (
+                      {/* Handle summary field if present */}
+                      {itinerary.summary && typeof itinerary.summary === 'string' && (
+                        <div className="mb-4 p-4 bg-accent/10 rounded-lg">
+                          <h3 className="text-lg font-semibold mb-2">Summary</h3>
+                          <p className="text-sm">{itinerary.summary}</p>
+                        </div>
+                      )}
+                      
+                      {/* Handle overview field */}
+                      {itinerary.overview && typeof itinerary.overview === 'string' && (
                         <div className="mb-4 p-4 bg-accent/10 rounded-lg">
                           <h3 className="text-lg font-semibold mb-2">Overview</h3>
                           <p className="text-sm">{itinerary.overview}</p>
                         </div>
                       )}
 
-                      {itinerary.estimatedCostINR && (
+                      {/* Handle estimated cost */}
+                      {itinerary.estimatedCostINR && typeof itinerary.estimatedCostINR === 'number' && (
                         <div className="mb-4 p-4 bg-primary/10 rounded-lg">
                           <div className="flex items-center justify-between">
                             <span className="font-semibold">Estimated Cost:</span>
@@ -412,7 +422,8 @@ export default function PlanTrip() {
                         </div>
                       )}
 
-                      {itinerary.dailyPlan && itinerary.dailyPlan.length > 0 && (
+                      {/* Handle daily plan */}
+                      {itinerary.dailyPlan && Array.isArray(itinerary.dailyPlan) && itinerary.dailyPlan.length > 0 && (
                         <div>
                           <h3 className="text-lg font-semibold mb-3">Daily Plan</h3>
                           <div className="space-y-3">
@@ -420,20 +431,24 @@ export default function PlanTrip() {
                               <div key={index} className="p-3 border rounded-lg group relative">
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1">
-                                    <h4 className="font-semibold mb-1">Day {day.day}</h4>
+                                    <h4 className="font-semibold mb-1">
+                                      Day {typeof day.day === 'number' ? day.day : index + 1}
+                                    </h4>
                                     <p className="text-sm text-muted-foreground">
                                       {typeof day.activities === 'string' 
                                         ? day.activities 
                                         : Array.isArray(day.activities)
                                         ? day.activities.join(', ')
-                                        : JSON.stringify(day.activities)}
+                                        : typeof day.activities === 'object'
+                                        ? JSON.stringify(day.activities)
+                                        : String(day.activities || '')}
                                     </p>
                                   </div>
                                   <Button
                                     size="sm"
                                     variant="ghost"
                                     className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={() => handleGenerate(day.day)}
+                                    onClick={() => handleGenerate(typeof day.day === 'number' ? day.day : index + 1)}
                                     disabled={loading}
                                   >
                                     <RefreshCw className="h-4 w-4" />
@@ -445,10 +460,21 @@ export default function PlanTrip() {
                         </div>
                       )}
 
-                      {itinerary.tips && (
+                      {/* Handle tips */}
+                      {itinerary.tips && typeof itinerary.tips === 'string' && (
                         <div className="mt-4 p-4 bg-secondary/10 rounded-lg">
                           <h3 className="text-lg font-semibold mb-2">Travel Tips</h3>
                           <p className="text-sm">{itinerary.tips}</p>
+                        </div>
+                      )}
+                      
+                      {/* Fallback: Display any unexpected structure as debug info */}
+                      {!itinerary.dailyPlan && !itinerary.overview && !itinerary.summary && (
+                        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                          <p className="text-sm mb-2 font-semibold">Unexpected response format. Raw data:</p>
+                          <pre className="text-xs overflow-auto max-h-96 bg-white dark:bg-gray-900 p-2 rounded">
+                            {JSON.stringify(itinerary, null, 2)}
+                          </pre>
                         </div>
                       )}
                     </div>
