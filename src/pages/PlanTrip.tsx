@@ -54,7 +54,29 @@ export default function PlanTrip() {
   const [budgetINR, setBudgetINR] = useState("");
   const [groupSize, setGroupSize] = useState("1");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-  const [itinerary, setItinerary] = useState<any>(null);
+  
+  // Sample itinerary to show by default
+  const sampleItinerary = {
+    overview: "A perfect 3-day romantic getaway to Udaipur, the City of Lakes, featuring luxurious palace hotels, serene boat rides, and stunning Rajasthani architecture.",
+    estimatedCostINR: 35000,
+    dailyPlan: [
+      {
+        day: 1,
+        activities: "Arrival at Udaipur Airport, Check-in at heritage hotel overlooking Lake Pichola, Evening visit to City Palace - explore royal courtyards and museums, Sunset boat ride on Lake Pichola with views of Lake Palace and Jag Mandir, Dinner at Ambrai Restaurant with lake views"
+      },
+      {
+        day: 2,
+        activities: "Morning visit to Saheliyon ki Bari (Garden of Maidens) with beautiful fountains, Explore Jagdish Temple - stunning Indo-Aryan architecture, Lunch at traditional Rajasthani thali restaurant, Afternoon cable car ride to Karni Mata Temple for panoramic city views, Evening cultural show - Rajasthani folk dance and music at Bagore ki Haveli, Dinner cruise on Lake Pichola"
+      },
+      {
+        day: 3,
+        activities: "Early morning visit to Fateh Sagar Lake for peaceful sunrise, Breakfast at lakeside café, Visit Vintage Car Museum showcasing royal collection, Shopping for miniature paintings and handicrafts at local markets, Lunch at rooftop restaurant with city views, Check-out and departure with memories of the White City"
+      }
+    ],
+    tips: "Book heritage hotels in advance for best rates. October to March is the best time to visit. Don't miss the sunset boat ride on Lake Pichola. Try authentic Rajasthani cuisine at local restaurants. Carry cash for shopping at local markets."
+  };
+  
+  const [itinerary, setItinerary] = useState<any>(sampleItinerary);
   const [aiModel, setAiModel] = useState<'gemini' | 'gpt5' | 'gpt5-mini'>('gemini');
 
   const toggleInterest = (interest: string) => {
@@ -181,6 +203,9 @@ export default function PlanTrip() {
             </h1>
             <p className="text-muted-foreground">
               Choose your planner mode and let AI create your perfect itinerary
+            </p>
+            <p className="text-sm text-primary mt-2">
+              ⭐ Sample itinerary shown below - Fill the form to generate your custom trip!
             </p>
           </div>
 
@@ -366,7 +391,12 @@ export default function PlanTrip() {
             {/* Results */}
             <Card>
               <CardHeader>
-                <CardTitle>Your Itinerary</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Your Itinerary</span>
+                  {itinerary === sampleItinerary && (
+                    <Badge variant="secondary" className="text-xs">Sample</Badge>
+                  )}
+                </CardTitle>
                 <CardDescription>AI-generated travel plan</CardDescription>
               </CardHeader>
               <CardContent>

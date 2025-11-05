@@ -1,12 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import ReviewSection from "@/components/ReviewSection";
-import { Plane } from "lucide-react";
+import { Plane, MapPin, Calendar, Users, Heart } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [featuredTrips, setFeaturedTrips] = useState<any[]>([]);
 
   useEffect(() => {
     // Check if user is authenticated and redirect to dashboard
@@ -21,6 +24,22 @@ const Index = () => {
         navigate("/dashboard");
       }
     });
+
+    // Fetch featured trips
+    const fetchFeaturedTrips = async () => {
+      const { data } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('is_public', true)
+        .order('likes_count', { ascending: false })
+        .limit(3);
+      
+      if (data) {
+        setFeaturedTrips(data);
+      }
+    };
+
+    fetchFeaturedTrips();
 
     return () => subscription.unsubscribe();
   }, [navigate]);
@@ -116,6 +135,84 @@ const Index = () => {
             <p className="text-center text-background/70 text-sm tracking-wide">
               — FOUNDER, TRAVEXA
             </p>
+          </div>
+        </section>
+
+        {/* Featured Trips Section */}
+        <section className="container mx-auto px-6 md:px-12 max-w-6xl mb-20 md:mb-32">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl md:text-4xl font-serif font-light text-foreground mb-4">
+              Popular Trips
+            </h3>
+            <p className="text-base text-muted-foreground">
+              Discover amazing journeys planned by our community
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {featuredTrips.map((trip) => (
+              <Card key={trip.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                {trip.image_url && (
+                  <div className="aspect-video overflow-hidden">
+                    <img 
+                      src={trip.image_url} 
+                      alt={trip.title}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                )}
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <CardTitle className="text-lg">{trip.title}</CardTitle>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Heart className="h-4 w-4" />
+                      <span>{trip.likes_count}</span>
+                    </div>
+                  </div>
+                  <CardDescription className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    {trip.destination}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {trip.planner_mode && (
+                      <Badge variant="secondary" className="text-xs">
+                        {trip.planner_mode}
+                      </Badge>
+                    )}
+                    {trip.interests?.slice(0, 2).map((interest: string) => (
+                      <Badge key={interest} variant="outline" className="text-xs">
+                        {interest}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {Math.ceil((new Date(trip.end_date).getTime() - new Date(trip.start_date).getTime()) / (1000 * 60 * 60 * 24))} days
+                    </div>
+                    {trip.group_size && (
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        {trip.group_size} {trip.group_size === 1 ? 'person' : 'people'}
+                      </div>
+                    )}
+                  </div>
+                  {trip.notes && (
+                    <p className="text-xs text-muted-foreground mt-3 line-clamp-2">
+                      {trip.notes}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center mt-8">
+            <Button variant="outline" asChild>
+              <Link to="/signup">Explore More Trips</Link>
+            </Button>
           </div>
         </section>
 
