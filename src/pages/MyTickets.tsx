@@ -4,7 +4,7 @@ import DashboardNav from "@/components/DashboardNav";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plane, Train, Bus, QrCode, Download, Calendar, MapPin, User, ScanLine, X } from "lucide-react";
+import { Plane, Train, Bus, Hotel, QrCode, Download, Calendar, MapPin, User, ScanLine, X } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,7 @@ export default function MyTickets() {
   const { toast } = useToast();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "flight" | "train" | "bus">("all");
+  const [filter, setFilter] = useState<"all" | "flight" | "train" | "bus" | "hotel">("all");
   const [activeTab, setActiveTab] = useState<"tickets" | "scanner">("tickets");
 
   useEffect(() => {
@@ -73,6 +73,7 @@ export default function MyTickets() {
       case 'flight': return Plane;
       case 'train': return Train;
       case 'bus': return Bus;
+      case 'hotel': return Hotel;
       default: return MapPin;
     }
   };
@@ -205,6 +206,15 @@ export default function MyTickets() {
                 >
                   <Bus className="h-4 w-4" />
                   <span className="hidden sm:inline">Buses</span>
+                </Button>
+                <Button
+                  variant={filter === "hotel" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilter("hotel")}
+                  className="gap-2"
+                >
+                  <Hotel className="h-4 w-4" />
+                  <span className="hidden sm:inline">Hotels</span>
                 </Button>
               </div>
             </div>
