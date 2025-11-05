@@ -8,10 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, MapPin, Globe, Calendar, LogOut, MessageCircle, UserPlus, UserCheck, UserMinus, Lock, Unlock, X } from "lucide-react";
+import { User, Mail, Phone, MapPin, Globe, Calendar, LogOut, MessageCircle, UserPlus, UserCheck, UserMinus, Lock, Unlock, X, Star } from "lucide-react";
 import DashboardNav from "@/components/DashboardNav";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { z } from "zod";
+
+const reviewSchema = z.object({
+  rating: z.number().min(1, "Please select a rating").max(5),
+  review_text: z.string().trim().min(10, "Review must be at least 10 characters").max(1000, "Review must be less than 1000 characters")
+});
 
 interface Profile {
   id: string;
@@ -46,6 +52,12 @@ const Profile = () => {
   const [connectionStatus, setConnectionStatus] = useState<string>("none");
   const [canMessage, setCanMessage] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  
+  // Review state
+  const [rating, setRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -326,6 +338,55 @@ const Profile = () => {
       .map((n) => n[0])
       .join("")
       .toUpperCase();
+  };
+
+  const handleSubmitReview = async () => {
+    try {
+      const validatedData = reviewSchema.parse({
+        rating,
+        review_text: reviewText
+      });
+
+      setIsSubmittingReview(true);
+
+      const { error } = await supabase
+        .from("reviews")
+        .insert({
+          user_id: currentUserId,
+          full_name: profile?.full_name || "Anonymous",
+          email: profile?.email || "",
+          rating: validatedData.rating,
+          review_text: validatedData.review_text
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Thank you for your feedback!",
+        description: "Your review has been submitted successfully.",
+      });
+
+      // Reset form
+      setRating(0);
+      setReviewText("");
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const firstError = error.issues[0];
+        toast({
+          title: "Validation Error",
+          description: firstError?.message || "Invalid input",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to submit review. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
   if (loading) {
@@ -736,6 +797,70 @@ const Profile = () => {
             </div>
           </CardContent>
         </Card>
+        )}
+
+        {/* App Review Section - Only for own profile */}
+        {isOwnProfile && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Share Your Experience</CardTitle>
+              <CardDescription>
+                Help us improve Travexa by sharing your feedback. Your review is private and will only be seen by our team.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label>How would you rate your experience? *</Label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      onMouseEnter={() => setHoveredRating(star)}
+                      onMouseLeave={() => setHoveredRating(0)}
+                      className="transition-transform hover:scale-110"
+                    >
+                      <Star
+                        className={`h-8 w-8 ${
+                          star <= (hoveredRating || rating)
+                            ? "fill-accent text-accent"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reviewText">Your Review *</Label>
+                <Textarea
+                  id="reviewText"
+                  placeholder="Tell us about your experience with Travexa... What do you like? What could be improved?"
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  rows={5}
+                  maxLength={1000}
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {reviewText.length}/1000 characters
+                </p>
+              </div>
+
+              <Button
+                onClick={handleSubmitReview}
+                disabled={isSubmittingReview || rating === 0 || reviewText.length < 10}
+                className="w-full"
+              >
+                {isSubmittingReview ? "Submitting..." : "Submit Review"}
+              </Button>
+
+              <p className="text-xs text-muted-foreground text-center">
+                Your review is confidential and will only be viewed by the Travexa team to improve the app.
+              </p>
+            </CardContent>
+          </Card>
         )}
       </main>
     </div>
