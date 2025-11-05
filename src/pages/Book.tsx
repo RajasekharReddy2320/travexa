@@ -211,21 +211,23 @@ export default function Book() {
           bookingData.booking_type = 'flight';
           bookingData.service_name = selection.data.airline;
           bookingData.service_number = selection.data.flightNumber;
-          bookingData.from_location = selection.data.from;
-          bookingData.to_location = selection.data.to;
-          bookingData.departure_time = selection.data.departure + ':00';
-          bookingData.arrival_time = selection.data.arrival + ':00';
+          bookingData.from_location = selection.data.from || 'Your Location';
+          bookingData.to_location = selection.data.to || 'Destination';
+          bookingData.departure_time = selection.data.departure ? `${selection.data.departure}:00` : '09:00:00';
+          bookingData.arrival_time = selection.data.arrival ? `${selection.data.arrival}:00` : '18:00:00';
           bookingData.price_inr = selection.data.price;
-          bookingData.class_type = selection.data.class;
+          bookingData.class_type = Array.isArray(selection.data.class) 
+            ? selection.data.class[0] 
+            : (selection.data.class || 'Economy');
           bookingData.seat_number = `${Math.floor(Math.random() * 30) + 1}A`;
         } else if (selection.type === 'train') {
           bookingData.booking_type = 'train';
           bookingData.service_name = selection.data.trainName;
           bookingData.service_number = selection.data.trainNumber;
-          bookingData.from_location = selection.data.from;
-          bookingData.to_location = selection.data.to;
-          bookingData.departure_time = selection.data.departure + ':00';
-          bookingData.arrival_time = selection.data.arrival + ':00';
+          bookingData.from_location = selection.data.from || 'Your Location';
+          bookingData.to_location = selection.data.to || 'Destination';
+          bookingData.departure_time = selection.data.departure ? `${selection.data.departure}:00` : '09:00:00';
+          bookingData.arrival_time = selection.data.arrival ? `${selection.data.arrival}:00` : '18:00:00';
           bookingData.price_inr = selection.data.classes?.[0]?.price || 0;
           bookingData.class_type = selection.data.classes?.[0]?.class || 'Sleeper';
           bookingData.seat_number = `S${Math.floor(Math.random() * 70) + 1}`;
@@ -233,19 +235,19 @@ export default function Book() {
           bookingData.booking_type = 'bus';
           bookingData.service_name = selection.data.operator;
           bookingData.service_number = selection.data.busNumber;
-          bookingData.from_location = selection.data.from;
-          bookingData.to_location = selection.data.to;
-          bookingData.departure_time = selection.data.departure + ':00';
-          bookingData.arrival_time = selection.data.arrival + ':00';
+          bookingData.from_location = selection.data.from || 'Your Location';
+          bookingData.to_location = selection.data.to || 'Destination';
+          bookingData.departure_time = selection.data.departure ? `${selection.data.departure}:00` : '09:00:00';
+          bookingData.arrival_time = selection.data.arrival ? `${selection.data.arrival}:00` : '18:00:00';
           bookingData.price_inr = selection.data.price;
-          bookingData.class_type = selection.data.busType;
+          bookingData.class_type = selection.data.busType || 'Sleeper';
           bookingData.seat_number = `${Math.floor(Math.random() * 40) + 1}`;
         } else if (selection.type === 'hotel') {
           bookingData.booking_type = 'hotel';
           bookingData.service_name = selection.data.name;
           bookingData.service_number = `ROOM-${Math.floor(Math.random() * 500) + 100}`;
-          bookingData.from_location = selection.data.location;
-          bookingData.to_location = selection.data.location;
+          bookingData.from_location = selection.data.location || destination || 'Hotel Location';
+          bookingData.to_location = selection.data.location || destination || 'Hotel Location';
           bookingData.departure_time = '14:00:00';
           bookingData.arrival_time = '11:00:00';
           bookingData.price_inr = selection.data.price * (itinerary.days?.length || 1);
