@@ -24,7 +24,7 @@ const bookingSchema = z.object({
   passenger_phone: z.string()
     .trim()
     .min(10, 'Phone number too short')
-    .max(20, 'Phone number too long'),
+    .max(15, 'Phone number too long'),
   from_location: z.string().trim().min(2).max(100),
   to_location: z.string().trim().min(2).max(100),
   departure_date: z.string().refine((d) => !isNaN(Date.parse(d)), 'Invalid departure date'),
@@ -159,6 +159,9 @@ serve(async (req) => {
       // Security: Log error server-side but return generic message
       console.error('[Booking Error]', {
         code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
         user_id: user.id,
         timestamp: new Date().toISOString()
       });
