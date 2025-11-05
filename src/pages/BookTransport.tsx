@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plane, Train, Bus, Search } from "lucide-react";
+import { Plane, Train, Bus, Hotel, Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
@@ -59,6 +59,7 @@ export default function BookTransport() {
   const [flights, setFlights] = useState<any[]>([]);
   const [trains, setTrains] = useState<any[]>([]);
   const [buses, setBuses] = useState<any[]>([]);
+  const [hotels, setHotels] = useState<any[]>([]);
 
   const handleSearch = async () => {
     // Security: Validate search parameters
@@ -93,6 +94,57 @@ export default function BookTransport() {
       } else if (activeTab === 'buses') {
         functionName = 'search-buses';
         setResults = setBuses;
+      } else if (activeTab === 'hotels') {
+        // Generate mock hotel data
+        const mockHotels = [
+          {
+            id: '1',
+            name: 'Luxury Grand Hotel',
+            rating: 5,
+            price: 5500,
+            amenities: ['WiFi', 'Pool', 'Spa', 'Restaurant', 'Gym'],
+            location: validatedData.to,
+            images: [],
+            reviews: 450
+          },
+          {
+            id: '2',
+            name: 'Comfort Inn & Suites',
+            rating: 4,
+            price: 3200,
+            amenities: ['WiFi', 'Breakfast', 'Gym', 'Parking'],
+            location: validatedData.to,
+            images: [],
+            reviews: 280
+          },
+          {
+            id: '3',
+            name: 'Budget Stay Hotel',
+            rating: 3,
+            price: 1800,
+            amenities: ['WiFi', 'AC', 'TV'],
+            location: validatedData.to,
+            images: [],
+            reviews: 150
+          },
+          {
+            id: '4',
+            name: 'Business Executive Hotel',
+            rating: 4,
+            price: 4200,
+            amenities: ['WiFi', 'Conference Room', 'Restaurant', 'Laundry'],
+            location: validatedData.to,
+            images: [],
+            reviews: 320
+          }
+        ];
+        setHotels(mockHotels);
+        toast({
+          title: "Search Complete",
+          description: `Found ${mockHotels.length} hotels`,
+        });
+        setLoading(false);
+        return;
       }
 
       // Use validated data
@@ -153,6 +205,15 @@ export default function BookTransport() {
     });
   };
 
+  const handleBookHotel = (hotel: any) => {
+    navigate('/book-confirm', { 
+      state: { 
+        bookingType: 'hotel',
+        booking: hotel 
+      } 
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <DashboardNav />
@@ -160,11 +221,11 @@ export default function BookTransport() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Book Your Journey</h1>
-          <p className="text-muted-foreground">Search and book flights, trains, and buses</p>
+          <p className="text-muted-foreground">Search and book flights, trains, buses, and hotels</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="flights" className="flex items-center gap-2">
               <Plane className="h-4 w-4" />
               Flights
@@ -177,27 +238,33 @@ export default function BookTransport() {
               <Bus className="h-4 w-4" />
               Buses
             </TabsTrigger>
+            <TabsTrigger value="hotels" className="flex items-center gap-2">
+              <Hotel className="h-4 w-4" />
+              Hotels
+            </TabsTrigger>
           </TabsList>
 
           {/* Search Form */}
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Search {activeTab === 'flights' ? 'Flights' : activeTab === 'trains' ? 'Trains' : 'Buses'}</CardTitle>
-              <CardDescription>Enter your travel details</CardDescription>
+              <CardTitle>Search {activeTab === 'flights' ? 'Flights' : activeTab === 'trains' ? 'Trains' : activeTab === 'buses' ? 'Buses' : 'Hotels'}</CardTitle>
+              <CardDescription>Enter your {activeTab === 'hotels' ? 'stay' : 'travel'} details</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {activeTab !== 'hotels' && (
+                  <div>
+                    <Label htmlFor="from">From</Label>
+                    <Input
+                      id="from"
+                      placeholder="e.g., Delhi"
+                      value={from}
+                      onChange={(e) => setFrom(e.target.value)}
+                    />
+                  </div>
+                )}
                 <div>
-                  <Label htmlFor="from">From</Label>
-                  <Input
-                    id="from"
-                    placeholder="e.g., Delhi"
-                    value={from}
-                    onChange={(e) => setFrom(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="to">To</Label>
+                  <Label htmlFor="to">{activeTab === 'hotels' ? 'Destination' : 'To'}</Label>
                   <Input
                     id="to"
                     placeholder="e.g., Mumbai"
@@ -206,7 +273,7 @@ export default function BookTransport() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="date">Date</Label>
+                  <Label htmlFor="date">{activeTab === 'hotels' ? 'Check-in Date' : 'Date'}</Label>
                   <Input
                     id="date"
                     type="date"
@@ -393,6 +460,55 @@ export default function BookTransport() {
                           <p className="text-3xl font-bold text-primary">₹{bus.price.toLocaleString()}</p>
                           <p className="text-sm text-muted-foreground mb-4">{bus.seatsAvailable} seats left</p>
                           <Button onClick={() => handleBookBus(bus)}>
+                            Book Now
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="hotels">
+            <div className="space-y-4">
+              {hotels.length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center text-muted-foreground">
+                    Search for hotels to see available options
+                  </CardContent>
+                </Card>
+              ) : (
+                hotels.map((hotel) => (
+                  <Card key={hotel.id}>
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-4 mb-2">
+                            <h3 className="font-semibold text-lg">{hotel.name}</h3>
+                            <div className="flex">
+                              {[...Array(hotel.rating)].map((_, i) => (
+                                <span key={i} className="text-yellow-500">★</span>
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-3">{hotel.location}</p>
+                          <div className="flex gap-2 flex-wrap mb-3">
+                            {hotel.amenities.map((amenity: string) => (
+                              <span key={amenity} className="text-xs bg-secondary px-2 py-1 rounded">
+                                {amenity}
+                              </span>
+                            ))}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Based on {hotel.reviews} reviews
+                          </p>
+                        </div>
+                        <div className="text-right ml-8">
+                          <p className="text-3xl font-bold text-primary">₹{hotel.price.toLocaleString()}</p>
+                          <p className="text-sm text-muted-foreground mb-4">per night</p>
+                          <Button onClick={() => handleBookHotel(hotel)}>
                             Book Now
                           </Button>
                         </div>
