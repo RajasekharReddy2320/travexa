@@ -144,6 +144,28 @@ export default function Book() {
       return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(passengerEmail.trim())) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate phone format (at least 10 digits)
+    const phoneDigits = passengerPhone.replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      toast({
+        title: "Invalid Phone",
+        description: "Please enter a valid phone number with at least 10 digits.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setShowPayment(true);
   };
 
@@ -167,9 +189,9 @@ export default function Book() {
       // Create bookings for each selection
       const bookingPromises = selectedBookings.map(async (selection) => {
         let bookingData: any = {
-          passenger_name: passengerName,
-          passenger_email: passengerEmail,
-          passenger_phone: passengerPhone,
+          passenger_name: passengerName.trim(),
+          passenger_email: passengerEmail.trim(),
+          passenger_phone: passengerPhone.trim(),
           from_location: destination || 'Destination',
           to_location: destination || 'Destination',
           departure_date: itinerary.days?.[0]?.date || new Date().toISOString().split('T')[0],
