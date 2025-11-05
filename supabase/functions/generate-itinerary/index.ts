@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
@@ -14,7 +15,10 @@ const itineraryRequestSchema = z.object({
   budgetINR: z.number().positive().max(10000000).optional().nullable(),
   groupSize: z.number().int().min(1).max(50),
   interests: z.array(z.string().max(50)).max(20),
-  plannerMode: z.enum(['comfort', 'time', 'budget']).optional()
+  plannerMode: z.enum(['comfort', 'time', 'budget']).optional(),
+  aiModel: z.enum(['gemini', 'gpt5', 'gpt5-mini']).optional(),
+  regenerateDay: z.number().optional(),
+  existingItinerary: z.any().optional()
 });
 
 serve(async (req) => {
@@ -37,7 +41,7 @@ serve(async (req) => {
       );
     }
 
-    const { destination, startDate, endDate, budgetINR, groupSize, interests, plannerMode } = validation.data;
+    const { destination, startDate, endDate, budgetINR, groupSize, interests, plannerMode, aiModel = 'gemini', regenerateDay, existingItinerary } = validation.data;
     
     // Security: Validate date logic
     const start = new Date(startDate);
@@ -64,11 +68,22 @@ serve(async (req) => {
       timestamp: new Date().toISOString()
     });
 
+    // Check for required API keys based on model selection
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    
+    if (aiModel === 'gemini' && !LOVABLE_API_KEY) {
       console.error('[Config Error] LOVABLE_API_KEY not configured');
       return new Response(
-        JSON.stringify({ error: 'Service configuration error' }),
+        JSON.stringify({ error: 'Lovable AI not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if ((aiModel === 'gpt5' || aiModel === 'gpt5-mini') && !OPENAI_API_KEY) {
+      console.error('[Config Error] OPENAI_API_KEY not configured');
+      return new Response(
+        JSON.stringify({ error: 'OpenAI API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -86,7 +101,21 @@ serve(async (req) => {
     
     systemPrompt += " Always provide costs in INR (Indian Rupees). Format your response as JSON with: overview, dailyPlan (array of {day, activities}), estimatedCostINR, and tips.";
 
-    const prompt = `Create a detailed travel itinerary for:
+    let prompt;
+    if (regenerateDay && existingItinerary) {
+      prompt = `Regenerate ONLY Day ${regenerateDay} of this travel itinerary:
+- Destination: ${destination}
+- Dates: ${startDate} to ${endDate}
+- Budget: ${budgetINR ? `₹${budgetINR}` : 'Flexible'}
+- Group Size: ${groupSize} ${groupSize === 1 ? 'person' : 'people'}
+- Interests: ${interests.join(', ')}
+- Planner Mode: ${plannerMode || 'balanced'}
+
+Current Day ${regenerateDay} activities: ${existingItinerary.dailyPlan?.find((d: any) => d.day === regenerateDay)?.activities || 'None'}
+
+Provide a COMPLETE new itinerary with all days, but focus on making Day ${regenerateDay} different and more interesting. Format as valid JSON only.`;
+    } else {
+      prompt = `Create a detailed travel itinerary for:
 - Destination: ${destination}
 - Dates: ${startDate} to ${endDate}
 - Budget: ${budgetINR ? `₹${budgetINR}` : 'Flexible'}
@@ -95,26 +124,55 @@ serve(async (req) => {
 - Planner Mode: ${plannerMode || 'balanced'}
 
 Provide a day-by-day breakdown with activities, estimated costs in INR, and travel tips. Format as valid JSON only.`;
+    }
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
+    let response;
+    let apiUrl;
+    let headers;
+    let requestBody: any;
+
+    if (aiModel === 'gemini') {
+      apiUrl = 'https://ai.gateway.lovable.dev/v1/chat/completions';
+      headers = {
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+      };
+      requestBody = {
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-      }),
+      };
+    } else {
+      // OpenAI GPT-5 models
+      apiUrl = 'https://api.openai.com/v1/chat/completions';
+      headers = {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      };
+      requestBody = {
+        model: aiModel === 'gpt5' ? 'gpt-5-2025-08-07' : 'gpt-5-mini-2025-08-07',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
+        ],
+        max_completion_tokens: 4000,
+      };
+    }
+
+    response = await fetch(apiUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
-      // Security: Log error code only, not full response
-      console.error('[AI Gateway Error]', {
+      const errorText = await response.text();
+      console.error('[AI API Error]', {
         status: response.status,
+        model: aiModel,
+        error: errorText,
         timestamp: new Date().toISOString()
       });
       
@@ -133,7 +191,7 @@ Provide a day-by-day breakdown with activities, estimated costs in INR, and trav
       }
       
       return new Response(
-        JSON.stringify({ error: 'Failed to generate itinerary' }),
+        JSON.stringify({ error: `Failed to generate itinerary: ${errorText}` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

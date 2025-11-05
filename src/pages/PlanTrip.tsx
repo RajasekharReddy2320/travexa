@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, IndianRupee, MapPin, Sparkles, Users, Zap, Clock, Wallet } from "lucide-react";
+import { Calendar, IndianRupee, MapPin, Sparkles, Users, Zap, Clock, Wallet, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardNav from "@/components/DashboardNav";
@@ -55,6 +55,7 @@ export default function PlanTrip() {
   const [groupSize, setGroupSize] = useState("1");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [itinerary, setItinerary] = useState<any>(null);
+  const [aiModel, setAiModel] = useState<'gemini' | 'gpt5' | 'gpt5-mini'>('gemini');
 
   const toggleInterest = (interest: string) => {
     setSelectedInterests(prev =>
@@ -64,7 +65,7 @@ export default function PlanTrip() {
     );
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (regenerateDay?: number) => {
     if (!destination || !startDate || !endDate || selectedInterests.length === 0) {
       toast({
         title: "Missing Information",
@@ -84,7 +85,10 @@ export default function PlanTrip() {
           budgetINR: budgetINR ? parseFloat(budgetINR) : null,
           groupSize: parseInt(groupSize),
           interests: selectedInterests,
-          plannerMode
+          plannerMode,
+          aiModel,
+          regenerateDay,
+          existingItinerary: regenerateDay ? itinerary : undefined
         }
       });
 
@@ -96,8 +100,8 @@ export default function PlanTrip() {
 
       setItinerary(data.itinerary);
       toast({
-        title: "Itinerary Generated!",
-        description: "Your personalized trip plan is ready.",
+        title: regenerateDay ? `Day ${regenerateDay} Regenerated!` : "Itinerary Generated!",
+        description: regenerateDay ? "The day has been updated with new activities." : "Your personalized trip plan is ready.",
       });
     } catch (error: any) {
       console.error('Error generating itinerary:', error);
@@ -298,8 +302,27 @@ export default function PlanTrip() {
                   </div>
                 </div>
 
+                <div>
+                  <Label htmlFor="aiModel">AI Model</Label>
+                  <Select value={aiModel} onValueChange={(value: any) => setAiModel(value)}>
+                    <SelectTrigger id="aiModel">
+                      <SelectValue placeholder="Select AI model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gemini">Google Gemini (Fast & Free)</SelectItem>
+                      <SelectItem value="gpt5">GPT-5 (Most Precise)</SelectItem>
+                      <SelectItem value="gpt5-mini">GPT-5 Mini (Balanced)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {aiModel === 'gemini' && 'Fast and reliable using Lovable AI'}
+                    {aiModel === 'gpt5' && 'Most accurate and detailed results'}
+                    {aiModel === 'gpt5-mini' && 'Good balance of speed and quality'}
+                  </p>
+                </div>
+
                 <Button
-                  onClick={handleGenerate}
+                  onClick={() => handleGenerate()}
                   disabled={loading}
                   className="w-full"
                   size="lg"
@@ -373,15 +396,28 @@ export default function PlanTrip() {
                           <h3 className="text-lg font-semibold mb-3">Daily Plan</h3>
                           <div className="space-y-3">
                             {itinerary.dailyPlan.map((day: any, index: number) => (
-                              <div key={index} className="p-3 border rounded-lg">
-                                <h4 className="font-semibold mb-1">Day {day.day}</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  {typeof day.activities === 'string' 
-                                    ? day.activities 
-                                    : Array.isArray(day.activities)
-                                    ? day.activities.join(', ')
-                                    : JSON.stringify(day.activities)}
-                                </p>
+                              <div key={index} className="p-3 border rounded-lg group relative">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold mb-1">Day {day.day}</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      {typeof day.activities === 'string' 
+                                        ? day.activities 
+                                        : Array.isArray(day.activities)
+                                        ? day.activities.join(', ')
+                                        : JSON.stringify(day.activities)}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => handleGenerate(day.day)}
+                                    disabled={loading}
+                                  >
+                                    <RefreshCw className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
                             ))}
                           </div>
