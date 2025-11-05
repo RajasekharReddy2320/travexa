@@ -13,21 +13,38 @@ const searchSchema = z.object({
   date: z.string().refine((d) => !isNaN(Date.parse(d)), 'Invalid date')
 });
 
-// Fake bus data generator
-const operators = ['RedBus', 'VRL Travels', 'SRS Travels', 'Orange Travels', 'Parveen Travels', 'Raj Travels', 'KPN Travels'];
-const busTypes = ['AC Sleeper', 'Non-AC Sleeper', 'AC Seater', 'Volvo AC', 'Multi-Axle', 'Semi-Sleeper'];
+// Realistic bus operators and types in India
+const operators = [
+  'RedBus', 'VRL Travels', 'SRS Travels', 'Orange Travels', 'Parveen Travels', 
+  'Raj Travels', 'KPN Travels', 'Sharma Travels', 'National Travels', 'KSRTC',
+  'MSRTC', 'TSRTC', 'IntrCity SmartBus', 'Zingbus', 'Abhibus'
+];
+const busTypes = [
+  'AC Sleeper', 'Non-AC Sleeper', 'AC Seater', 'Volvo AC', 'Multi-Axle', 
+  'Semi-Sleeper', 'Volvo Multi-Axle', 'Scania AC', 'Mercedes AC', 'Electric AC'
+];
 
 function generateBuses(from: string, to: string, date: string) {
   const buses = [];
-  const numBuses = 6 + Math.floor(Math.random() * 8);
+  const numBuses = 10 + Math.floor(Math.random() * 12); // 10-21 buses
   
   for (let i = 0; i < numBuses; i++) {
     const operator = operators[Math.floor(Math.random() * operators.length)];
     const busType = busTypes[Math.floor(Math.random() * busTypes.length)];
-    const hour = 6 + Math.floor(Math.random() * 18);
-    const minute = Math.floor(Math.random() * 60);
-    const duration = 120 + Math.floor(Math.random() * 600);
-    const basePrice = 400 + Math.floor(Math.random() * 1500);
+    const hour = 5 + Math.floor(Math.random() * 21); // 5 AM to 1 AM
+    const minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+    const duration = 180 + Math.floor(Math.random() * 840); // 3-17 hours
+    const isACBus = busType.includes('AC');
+    const basePrice = isACBus ? 600 + Math.floor(Math.random() * 1800) : 300 + Math.floor(Math.random() * 900);
+    
+    // Calculate arrival (may be next day)
+    let arrivalHour = hour + Math.floor(duration / 60);
+    const nextDay = arrivalHour >= 24;
+    arrivalHour = arrivalHour % 24;
+    const arrivalMinute = (minute + duration % 60) % 60;
+    
+    const totalSeats = busType.includes('Sleeper') ? 40 : 50;
+    const seatsAvailable = Math.floor(Math.random() * (totalSeats - 5)) + 5;
     
     buses.push({
       id: `BS${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
@@ -36,20 +53,23 @@ function generateBuses(from: string, to: string, date: string) {
       from: from,
       to: to,
       departureTime: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`,
-      arrivalTime: `${((hour + Math.floor(duration / 60)) % 24).toString().padStart(2, '0')}:${((minute + duration % 60) % 60).toString().padStart(2, '0')}`,
+      arrivalTime: `${arrivalHour.toString().padStart(2, '0')}:${arrivalMinute.toString().padStart(2, '0')}${nextDay ? ' +1' : ''}`,
       duration: `${Math.floor(duration / 60)}h ${duration % 60}m`,
       date: date,
       price: basePrice,
-      seatsAvailable: Math.floor(Math.random() * 30) + 5,
-      totalSeats: 40,
+      seatsAvailable,
+      totalSeats,
       rating: (3.5 + Math.random() * 1.5).toFixed(1),
+      reviewsCount: Math.floor(Math.random() * 2000) + 100,
+      boardingPoints: [`${from} Bus Stand`, `${from} Railway Station`, `${from} Airport`].slice(0, Math.floor(Math.random() * 2) + 1),
+      droppingPoints: [`${to} Bus Stand`, `${to} Railway Station`],
       amenities: [
-        'WiFi',
-        'Charging Point',
-        'Water Bottle',
-        'Emergency Exit'
+        'WiFi', 'Charging Point', 'Water Bottle', 'Emergency Exit',
+        'Reading Light', 'Blanket', 'Snacks', 'Live Tracking', 'USB Charger'
       ].filter(() => Math.random() > 0.5),
-      cancellationPolicy: 'Free cancellation up to 24 hours before departure'
+      cancellationPolicy: 'Free cancellation up to 24 hours before departure',
+      windowSeatsAvailable: Math.floor(seatsAvailable * 0.4),
+      refundable: true
     });
   }
   

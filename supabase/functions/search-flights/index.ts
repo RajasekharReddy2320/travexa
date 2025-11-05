@@ -14,48 +14,56 @@ const searchSchema = z.object({
   passengers: z.number().int().min(1).max(9).default(1)
 });
 
-// Fake flight data generator
-const airlines = ['Air India', 'IndiGo', 'SpiceJet', 'Vistara', 'Go First', 'AirAsia India'];
+// Realistic flight data
+const airlines = ['Air India', 'IndiGo', 'SpiceJet', 'Vistara', 'Go First', 'AirAsia India', 'Akasa Air'];
 const airports: Record<string, string> = {
-  'Delhi': 'DEL',
-  'Mumbai': 'BOM',
-  'Bangalore': 'BLR',
-  'Kolkata': 'CCU',
-  'Chennai': 'MAA',
-  'Hyderabad': 'HYD',
-  'Pune': 'PNQ',
-  'Ahmedabad': 'AMD',
-  'Goa': 'GOI',
-  'Jaipur': 'JAI'
+  'Delhi': 'DEL', 'Mumbai': 'BOM', 'Bangalore': 'BLR', 'Bengaluru': 'BLR',
+  'Kolkata': 'CCU', 'Chennai': 'MAA', 'Hyderabad': 'HYD', 'Pune': 'PNQ',
+  'Ahmedabad': 'AMD', 'Goa': 'GOI', 'Jaipur': 'JAI', 'Kochi': 'COK',
+  'Lucknow': 'LKO', 'Chandigarh': 'IXC', 'Indore': 'IDR', 'Bhubaneswar': 'BBI',
+  'Varanasi': 'VNS', 'Patna': 'PAT', 'Ranchi': 'IXR', 'Guwahati': 'GAU',
+  'Srinagar': 'SXR', 'Amritsar': 'ATQ', 'Udaipur': 'UDR', 'Jodhpur': 'JDH',
+  'Mangalore': 'IXE', 'Coimbatore': 'CJB', 'Nagpur': 'NAG', 'Trivandrum': 'TRV',
+  'Visakhapatnam': 'VTZ', 'Vijayawada': 'VGA', 'Madurai': 'IXM', 'Agartala': 'IXA'
 };
 
 function generateFlights(from: string, to: string, date: string) {
   const flights = [];
-  const numFlights = 5 + Math.floor(Math.random() * 5);
+  const numFlights = 8 + Math.floor(Math.random() * 7); // 8-14 flights
   
   for (let i = 0; i < numFlights; i++) {
     const airline = airlines[Math.floor(Math.random() * airlines.length)];
-    const hour = 6 + Math.floor(Math.random() * 16);
-    const minute = Math.floor(Math.random() * 60);
-    const duration = 60 + Math.floor(Math.random() * 180);
-    const basePrice = 2500 + Math.floor(Math.random() * 8000);
+    const hour = 5 + Math.floor(Math.random() * 19); // 5 AM to 11 PM
+    const minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)]; // Round to 15 min intervals
+    const duration = 60 + Math.floor(Math.random() * 240); // 1-5 hours
+    const stops = Math.random() > 0.75 ? 1 : 0;
+    const basePrice = stops === 0 ? 3000 + Math.floor(Math.random() * 9000) : 2000 + Math.floor(Math.random() * 6000);
+    
+    // Add time for next day if duration crosses midnight
+    let arrivalHour = hour + Math.floor(duration / 60);
+    const nextDay = arrivalHour >= 24;
+    arrivalHour = arrivalHour % 24;
+    const arrivalMinute = (minute + duration % 60) % 60;
     
     flights.push({
       id: `FL${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
       airline,
       flightNumber: `${airline.split(' ')[0].substring(0, 2).toUpperCase()}${Math.floor(Math.random() * 9000) + 1000}`,
       from: from,
-      fromCode: airports[from] || 'XXX',
+      fromCode: airports[from] || from.substring(0, 3).toUpperCase(),
       to: to,
-      toCode: airports[to] || 'YYY',
+      toCode: airports[to] || to.substring(0, 3).toUpperCase(),
       departureTime: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`,
-      arrivalTime: `${((hour + Math.floor(duration / 60)) % 24).toString().padStart(2, '0')}:${((minute + duration % 60) % 60).toString().padStart(2, '0')}`,
+      arrivalTime: `${arrivalHour.toString().padStart(2, '0')}:${arrivalMinute.toString().padStart(2, '0')}${nextDay ? ' +1' : ''}`,
       duration: `${Math.floor(duration / 60)}h ${duration % 60}m`,
       date: date,
       price: basePrice,
-      seatsAvailable: Math.floor(Math.random() * 50) + 10,
+      seatsAvailable: Math.floor(Math.random() * 80) + 15,
       class: ['Economy', 'Business'],
-      stops: Math.random() > 0.7 ? 1 : 0
+      stops: stops,
+      stopLocation: stops > 0 ? ['Bangalore', 'Hyderabad', 'Mumbai', 'Delhi'][Math.floor(Math.random() * 4)] : null,
+      baggage: '15 kg check-in, 7 kg cabin',
+      refundable: Math.random() > 0.5
     });
   }
   

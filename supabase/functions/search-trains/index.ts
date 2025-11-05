@@ -13,40 +13,59 @@ const searchSchema = z.object({
   date: z.string().refine((d) => !isNaN(Date.parse(d)), 'Invalid date')
 });
 
-// Fake train data generator
+// Realistic Indian train data
 const trainNames = [
   'Rajdhani Express', 'Shatabdi Express', 'Duronto Express', 'Garib Rath',
-  'Humsafar Express', 'Tejas Express', 'Vande Bharat', 'Double Decker'
+  'Humsafar Express', 'Tejas Express', 'Vande Bharat', 'Double Decker',
+  'Jan Shatabdi', 'Sampark Kranti', 'Purushottam Express', 'Karnataka Express',
+  'Chennai Express', 'Mumbai Rajdhani', 'Delhi Duronto', 'Kolkata Mail'
 ];
 
 function generateTrains(from: string, to: string, date: string) {
   const trains = [];
-  const numTrains = 4 + Math.floor(Math.random() * 6);
+  const numTrains = 6 + Math.floor(Math.random() * 8); // 6-13 trains
   
   for (let i = 0; i < numTrains; i++) {
     const name = trainNames[Math.floor(Math.random() * trainNames.length)];
-    const hour = 5 + Math.floor(Math.random() * 20);
-    const minute = Math.floor(Math.random() * 60);
-    const duration = 180 + Math.floor(Math.random() * 480);
-    const basePrice = 500 + Math.floor(Math.random() * 2500);
+    const hour = 4 + Math.floor(Math.random() * 22); // 4 AM to 1 AM
+    const minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+    const duration = 240 + Math.floor(Math.random() * 720); // 4-16 hours
+    const basePrice = 400 + Math.floor(Math.random() * 1200);
+    
+    // Calculate arrival time (may be next day)
+    let arrivalHour = hour + Math.floor(duration / 60);
+    const daysLater = Math.floor(arrivalHour / 24);
+    arrivalHour = arrivalHour % 24;
+    const arrivalMinute = (minute + duration % 60) % 60;
+    
+    const classes: Record<string, { price: number; available: number; status: string }> = {};
+    const availableClasses = ['SL', '3A', '2A', '1A'];
+    const classMultipliers = { 'SL': 1, '3A': 1.8, '2A': 2.5, '1A': 4 };
+    
+    availableClasses.forEach(cls => {
+      const availability = Math.floor(Math.random() * 150) + 10;
+      classes[cls] = {
+        price: Math.floor(basePrice * classMultipliers[cls as keyof typeof classMultipliers]),
+        available: availability,
+        status: availability > 50 ? 'Available' : availability > 10 ? 'RAC' : 'Waitlist'
+      };
+    });
     
     trains.push({
       id: `TR${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
       name,
-      trainNumber: `${Math.floor(Math.random() * 90000) + 10000}`,
+      trainNumber: `${Math.floor(Math.random() * 80000) + 10000}`,
       from: from,
       to: to,
       departureTime: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`,
-      arrivalTime: `${((hour + Math.floor(duration / 60)) % 24).toString().padStart(2, '0')}:${((minute + duration % 60) % 60).toString().padStart(2, '0')}`,
+      arrivalTime: `${arrivalHour.toString().padStart(2, '0')}:${arrivalMinute.toString().padStart(2, '0')}${daysLater > 0 ? ` +${daysLater}` : ''}`,
       duration: `${Math.floor(duration / 60)}h ${duration % 60}m`,
       date: date,
-      classes: {
-        'SL': { price: basePrice, available: Math.floor(Math.random() * 100) + 20 },
-        '3A': { price: Math.floor(basePrice * 1.5), available: Math.floor(Math.random() * 80) + 10 },
-        '2A': { price: Math.floor(basePrice * 2), available: Math.floor(Math.random() * 60) + 5 },
-        '1A': { price: Math.floor(basePrice * 3), available: Math.floor(Math.random() * 40) + 5 }
-      },
-      runsOn: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+      classes,
+      runsOn: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      platform: Math.floor(Math.random() * 8) + 1,
+      quota: ['General', 'Tatkal', 'Ladies'],
+      facilities: ['Pantry Car', 'Charging Point', 'WiFi'].filter(() => Math.random() > 0.4)
     });
   }
   
