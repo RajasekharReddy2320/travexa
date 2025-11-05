@@ -53,6 +53,7 @@ export default function BookTransport() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [date, setDate] = useState("");
+  const [checkoutDate, setCheckoutDate] = useState("");
   const [passengers, setPassengers] = useState("1");
   
   // Results state
@@ -95,13 +96,23 @@ export default function BookTransport() {
         functionName = 'search-buses';
         setResults = setBuses;
       } else if (activeTab === 'hotels') {
+        // Calculate number of nights
+        let nights = 1;
+        if (validatedData.date && checkoutDate) {
+          const checkin = new Date(validatedData.date);
+          const checkout = new Date(checkoutDate);
+          nights = Math.max(1, Math.ceil((checkout.getTime() - checkin.getTime()) / (1000 * 60 * 60 * 24)));
+        }
+
         // Generate mock hotel data
         const mockHotels = [
           {
             id: '1',
             name: 'Luxury Grand Hotel',
             rating: 5,
-            price: 5500,
+            pricePerNight: 5500,
+            price: 5500 * nights,
+            nights: nights,
             amenities: ['WiFi', 'Pool', 'Spa', 'Restaurant', 'Gym'],
             location: validatedData.to,
             images: [],
@@ -111,7 +122,9 @@ export default function BookTransport() {
             id: '2',
             name: 'Comfort Inn & Suites',
             rating: 4,
-            price: 3200,
+            pricePerNight: 3200,
+            price: 3200 * nights,
+            nights: nights,
             amenities: ['WiFi', 'Breakfast', 'Gym', 'Parking'],
             location: validatedData.to,
             images: [],
@@ -121,7 +134,9 @@ export default function BookTransport() {
             id: '3',
             name: 'Budget Stay Hotel',
             rating: 3,
-            price: 1800,
+            pricePerNight: 1800,
+            price: 1800 * nights,
+            nights: nights,
             amenities: ['WiFi', 'AC', 'TV'],
             location: validatedData.to,
             images: [],
@@ -131,7 +146,9 @@ export default function BookTransport() {
             id: '4',
             name: 'Business Executive Hotel',
             rating: 4,
-            price: 4200,
+            pricePerNight: 4200,
+            price: 4200 * nights,
+            nights: nights,
             amenities: ['WiFi', 'Conference Room', 'Restaurant', 'Laundry'],
             location: validatedData.to,
             images: [],
@@ -141,7 +158,7 @@ export default function BookTransport() {
         setHotels(mockHotels);
         toast({
           title: "Search Complete",
-          description: `Found ${mockHotels.length} hotels`,
+          description: `Found ${mockHotels.length} hotels for ${nights} night(s)`,
         });
         setLoading(false);
         return;
@@ -281,6 +298,18 @@ export default function BookTransport() {
                     onChange={(e) => setDate(e.target.value)}
                   />
                 </div>
+                {activeTab === 'hotels' && (
+                  <div>
+                    <Label htmlFor="checkoutDate">Check-out Date</Label>
+                    <Input
+                      id="checkoutDate"
+                      type="date"
+                      value={checkoutDate}
+                      onChange={(e) => setCheckoutDate(e.target.value)}
+                      min={date || undefined}
+                    />
+                  </div>
+                )}
                 {activeTab === 'flights' && (
                   <div>
                     <Label htmlFor="passengers">Passengers</Label>
@@ -506,8 +535,12 @@ export default function BookTransport() {
                           </p>
                         </div>
                         <div className="text-right ml-8">
-                          <p className="text-3xl font-bold text-primary">₹{hotel.price.toLocaleString()}</p>
-                          <p className="text-sm text-muted-foreground mb-4">per night</p>
+                          <div className="flex items-baseline gap-2 justify-end">
+                            <span className="text-3xl font-bold text-primary">₹{hotel.price.toLocaleString()}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            ₹{hotel.pricePerNight?.toLocaleString() || hotel.price.toLocaleString()} × {hotel.nights || 1} night{(hotel.nights || 1) > 1 ? 's' : ''}
+                          </p>
                           <Button onClick={() => handleBookHotel(hotel)}>
                             Book Now
                           </Button>
