@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Plane, Compass, UserCheck, Ticket, ShoppingCart, User } from "lucide-react";
+import logo from "@/assets/travexa-logo.jpg";
 import {
   Sidebar,
   SidebarContent,
@@ -46,17 +47,9 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2 px-2 text-lg font-bold">
-            <div className="relative">
-              <Plane className="h-5 w-5 text-primary animate-pulse" />
-              <div className="absolute inset-0 animate-spin-slow opacity-30">
-                <Plane className="h-5 w-5 text-primary" />
-              </div>
-            </div>
+          <SidebarGroupLabel className="flex items-center gap-2 px-2">
             {!collapsed && (
-              <span>
-                Trave<span className="text-primary">X</span>a
-              </span>
+              <img src={logo} alt="Travexa" className="h-8 w-auto" />
             )}
           </SidebarGroupLabel>
           <SidebarGroupContent>

@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, User, Plane, Compass, UserCheck, Ticket, ShoppingCart, Menu, X, MessageSquare } from "lucide-react";
+import logo from "@/assets/travexa-logo.jpg";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,16 +27,8 @@ const DashboardNav = () => {
     <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center gap-4 px-4">
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-2 font-bold text-xl group">
-          <div className="relative">
-            <Plane className="h-6 w-6 text-primary animate-pulse" />
-            <div className="absolute inset-0 animate-spin-slow opacity-30">
-              <Plane className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <span className="hidden sm:inline-block">
-            Trave<span className="text-primary">X</span>a
-          </span>
+        <Link to="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
+          <img src={logo} alt="Travexa" className="h-10 w-auto" />
         </Link>
 
         {/* Search Box */}

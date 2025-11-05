@@ -1,5 +1,6 @@
-import { Plane, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import { Link } from "react-router-dom";
+import logo from "@/assets/travexa-logo.jpg";
 
 const Footer = () => {
   return (
@@ -8,9 +9,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div>
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <Plane className="h-6 w-6 text-accent" />
-              <span className="text-xl font-bold">Travexa</span>
+            <Link to="/" className="flex items-center mb-4 hover:opacity-80 transition-opacity">
+              <img src={logo} alt="Travexa" className="h-10 w-auto" />
             </Link>
             <p className="text-primary-foreground/80 text-sm">
               Your AI-powered travel companion for unforgettable adventures around the world.
