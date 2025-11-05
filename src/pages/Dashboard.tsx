@@ -51,9 +51,14 @@ const Dashboard = () => {
   };
 
   const loadTrips = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) return;
+
     const { data, error } = await supabase
       .from("trips")
       .select("*")
+      .eq('user_id', session.user.id)
       .order("created_at", { ascending: false });
 
     if (error) {

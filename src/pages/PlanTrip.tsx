@@ -440,13 +440,17 @@ export default function PlanTrip() {
                         </div>
                       )}
 
-                      {/* Handle estimated cost */}
-                      {itinerary.estimatedCostINR && typeof itinerary.estimatedCostINR === 'number' && (
+                      {/* Handle estimated cost - check multiple field names */}
+                      {(itinerary.estimatedCostINR || itinerary.totalEstimatedCost || itinerary.estimatedCost) && (
                         <div className="mb-4 p-4 bg-primary/10 rounded-lg">
                           <div className="flex items-center justify-between">
-                            <span className="font-semibold">Estimated Cost:</span>
-                            <span className="text-xl font-bold text-primary">
-                              ₹{itinerary.estimatedCostINR.toLocaleString('en-IN')}
+                            <span className="font-semibold">Estimated Trip Cost:</span>
+                            <span className="text-2xl font-bold text-primary">
+                              ₹{(itinerary.estimatedCostINR || 
+                                 (typeof itinerary.totalEstimatedCost === 'string' 
+                                   ? parseInt(itinerary.totalEstimatedCost.replace(/[^0-9]/g, '')) 
+                                   : itinerary.totalEstimatedCost) ||
+                                 itinerary.estimatedCost || 0).toLocaleString('en-IN')}
                             </span>
                           </div>
                         </div>
