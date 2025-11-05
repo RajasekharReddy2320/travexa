@@ -24,8 +24,11 @@ export default function MyTickets() {
 
   const fetchBookings = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log('MyTickets: Fetching bookings for user:', user?.id, 'Error:', userError);
+      
+      if (!user || userError) {
+        console.log('MyTickets: No user found, redirecting to login');
         navigate('/login');
         return;
       }
@@ -36,10 +39,16 @@ export default function MyTickets() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('MyTickets: Fetched bookings:', data?.length || 0, 'bookings', 'Error:', error);
+
+      if (error) {
+        console.error('MyTickets: Database error:', error);
+        throw error;
+      }
+      
       setBookings(data || []);
     } catch (error: any) {
-      console.error('Error fetching bookings:', error);
+      console.error('MyTickets: Error fetching bookings:', error);
       toast({
         title: "Error",
         description: "Failed to load your tickets",

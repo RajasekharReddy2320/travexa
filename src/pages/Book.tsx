@@ -172,8 +172,10 @@ export default function Book() {
   const handlePayment = async () => {
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Session check:', { session: !!session, error: sessionError });
+      
+      if (!session || sessionError) {
         toast({
           title: "Not Authenticated",
           description: "Please log in to complete booking.",
@@ -182,6 +184,8 @@ export default function Book() {
         navigate('/login');
         return;
       }
+
+      console.log('User authenticated, proceeding with booking for user:', session.user.id);
 
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -248,36 +252,40 @@ export default function Book() {
           bookingData.class_type = `${selection.data.rating} Star`;
         }
 
-        console.log('Sending booking data:', bookingData);
+        console.log('Sending booking data:', JSON.stringify(bookingData, null, 2));
 
         const { data, error } = await supabase.functions.invoke('create-booking', {
           body: bookingData
         });
 
+        console.log('Booking response:', { data, error, type: selection.type });
+
         if (error) {
           console.error('Booking error for', selection.type, ':', error);
-          throw new Error(`Failed to book ${selection.type}: ${error.message}`);
+          throw new Error(`Failed to book ${selection.type}: ${error.message || JSON.stringify(error)}`);
         }
 
         if (!data || !data.booking) {
-          console.error('No booking data returned for', selection.type);
-          throw new Error(`Failed to create ${selection.type} booking`);
+          console.error('No booking data returned for', selection.type, 'Full response:', data);
+          throw new Error(`Failed to create ${selection.type} booking - no booking data returned`);
         }
 
-        console.log('Booking successful:', data.booking);
+        console.log('Booking successful for', selection.type, ':', data.booking.id);
         return data.booking;
       });
 
       const results = await Promise.all(bookingPromises);
-      console.log('All bookings created:', results);
+      console.log('All bookings created successfully:', results.map(r => ({ id: r.id, type: r.booking_type })));
 
       toast({
         title: "Booking Successful!",
-        description: `${results.length} booking(s) confirmed. Check My Tickets to view details.`,
+        description: `${results.length} booking(s) confirmed. Redirecting to My Tickets...`,
       });
 
-      // Wait a moment before navigating to ensure data is saved
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait to ensure database updates propagate
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log('Navigating to my-tickets page');
       navigate('/my-tickets');
     } catch (error: any) {
       console.error('Booking error:', error);
