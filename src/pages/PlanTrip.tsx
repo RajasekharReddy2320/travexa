@@ -320,16 +320,26 @@ export default function PlanTrip() {
                       <SelectValue placeholder="Select AI model" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="gemini">Google Gemini (Fast & Free)</SelectItem>
-                      <SelectItem value="gpt5">GPT-5 (Most Precise)</SelectItem>
-                      <SelectItem value="gpt5-mini">GPT-5 Mini (Balanced)</SelectItem>
+                      <SelectItem value="gemini">
+                        <div className="flex flex-col">
+                          <span>Google Gemini ⚡ (Recommended)</span>
+                          <span className="text-xs text-muted-foreground">Fast & Free via Lovable AI</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="gpt5">
+                        <div className="flex flex-col">
+                          <span>GPT-5</span>
+                          <span className="text-xs text-muted-foreground">Requires OpenAI credits</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="gpt5-mini">
+                        <div className="flex flex-col">
+                          <span>GPT-5 Mini</span>
+                          <span className="text-xs text-muted-foreground">Requires OpenAI credits</span>
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {aiModel === 'gemini' && 'Fast and reliable using Lovable AI'}
-                    {aiModel === 'gpt5' && 'Most accurate and detailed results'}
-                    {aiModel === 'gpt5-mini' && 'Good balance of speed and quality'}
-                  </p>
                 </div>
 
                 <Button

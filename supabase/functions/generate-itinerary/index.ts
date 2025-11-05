@@ -178,8 +178,22 @@ Provide a day-by-day breakdown with activities, estimated costs in INR, and trav
       
       if (response.status === 429) {
         const serviceName = aiModel === 'gemini' ? 'Lovable AI' : 'OpenAI';
+        
+        // Check if it's an OpenAI quota issue
+        const isQuotaIssue = errorText.includes('insufficient_quota') || errorText.includes('exceeded your current quota');
+        
+        if (isQuotaIssue && aiModel !== 'gemini') {
+          return new Response(
+            JSON.stringify({ 
+              error: `OpenAI account has no credits. Please use Google Gemini instead (free) or add credits to your OpenAI account.`,
+              suggestModel: 'gemini'
+            }),
+            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
         const suggestion = aiModel !== 'gemini' 
-          ? ' Try using Google Gemini model instead, or wait a few minutes before retrying.'
+          ? ' Try using Google Gemini model instead (free), or wait a few minutes before retrying.'
           : ' Please wait a few minutes before trying again.';
         
         return new Response(
