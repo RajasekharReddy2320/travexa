@@ -222,24 +222,24 @@ export default function Book() {
           bookingData.seat_number = `${Math.floor(Math.random() * 30) + 1}A`;
         } else if (selection.type === 'train') {
           bookingData.booking_type = 'train';
-          bookingData.service_name = selection.data.trainName;
-          bookingData.service_number = selection.data.trainNumber;
+          bookingData.service_name = selection.data.trainName || selection.data.name || 'Train Service';
+          bookingData.service_number = selection.data.trainNumber || selection.data.number || `TRAIN-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
           bookingData.from_location = selection.data.from || 'Your Location';
           bookingData.to_location = selection.data.to || 'Destination';
           bookingData.departure_time = selection.data.departure ? `${selection.data.departure}:00` : '09:00:00';
           bookingData.arrival_time = selection.data.arrival ? `${selection.data.arrival}:00` : '18:00:00';
-          bookingData.price_inr = selection.data.classes?.[0]?.price || 0;
+          bookingData.price_inr = selection.data.classes?.[0]?.price || selection.data.price || 0;
           bookingData.class_type = selection.data.classes?.[0]?.class || 'Sleeper';
           bookingData.seat_number = `S${Math.floor(Math.random() * 70) + 1}`;
         } else if (selection.type === 'bus') {
           bookingData.booking_type = 'bus';
-          bookingData.service_name = selection.data.operator;
-          bookingData.service_number = selection.data.busNumber;
+          bookingData.service_name = selection.data.operator || selection.data.name || 'Bus Service';
+          bookingData.service_number = selection.data.busNumber || selection.data.number || `BUS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
           bookingData.from_location = selection.data.from || 'Your Location';
           bookingData.to_location = selection.data.to || 'Destination';
           bookingData.departure_time = selection.data.departure ? `${selection.data.departure}:00` : '09:00:00';
           bookingData.arrival_time = selection.data.arrival ? `${selection.data.arrival}:00` : '18:00:00';
-          bookingData.price_inr = selection.data.price;
+          bookingData.price_inr = selection.data.price || 0;
           bookingData.class_type = selection.data.busType || 'Sleeper';
           bookingData.seat_number = `${Math.floor(Math.random() * 40) + 1}`;
         } else if (selection.type === 'hotel') {
