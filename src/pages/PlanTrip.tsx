@@ -375,7 +375,13 @@ export default function PlanTrip() {
                             {itinerary.dailyPlan.map((day: any, index: number) => (
                               <div key={index} className="p-3 border rounded-lg">
                                 <h4 className="font-semibold mb-1">Day {day.day}</h4>
-                                <p className="text-sm text-muted-foreground">{day.activities}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {typeof day.activities === 'string' 
+                                    ? day.activities 
+                                    : Array.isArray(day.activities)
+                                    ? day.activities.join(', ')
+                                    : JSON.stringify(day.activities)}
+                                </p>
                               </div>
                             ))}
                           </div>
