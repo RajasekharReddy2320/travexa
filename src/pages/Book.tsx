@@ -195,8 +195,8 @@ export default function Book() {
           from_location: destination || 'Destination',
           to_location: destination || 'Destination',
           departure_date: itinerary.days?.[0]?.date || new Date().toISOString().split('T')[0],
-          departure_time: '09:00',
-          arrival_time: '18:00',
+          departure_time: '09:00:00',
+          arrival_time: '18:00:00',
           service_name: 'Service',
           service_number: 'SVC001',
           price_inr: 0,
@@ -209,8 +209,8 @@ export default function Book() {
           bookingData.service_number = selection.data.flightNumber;
           bookingData.from_location = selection.data.from;
           bookingData.to_location = selection.data.to;
-          bookingData.departure_time = selection.data.departure;
-          bookingData.arrival_time = selection.data.arrival;
+          bookingData.departure_time = selection.data.departure + ':00';
+          bookingData.arrival_time = selection.data.arrival + ':00';
           bookingData.price_inr = selection.data.price;
           bookingData.class_type = selection.data.class;
           bookingData.seat_number = `${Math.floor(Math.random() * 30) + 1}A`;
@@ -220,8 +220,8 @@ export default function Book() {
           bookingData.service_number = selection.data.trainNumber;
           bookingData.from_location = selection.data.from;
           bookingData.to_location = selection.data.to;
-          bookingData.departure_time = selection.data.departure;
-          bookingData.arrival_time = selection.data.arrival;
+          bookingData.departure_time = selection.data.departure + ':00';
+          bookingData.arrival_time = selection.data.arrival + ':00';
           bookingData.price_inr = selection.data.classes?.[0]?.price || 0;
           bookingData.class_type = selection.data.classes?.[0]?.class || 'Sleeper';
           bookingData.seat_number = `S${Math.floor(Math.random() * 70) + 1}`;
@@ -231,8 +231,8 @@ export default function Book() {
           bookingData.service_number = selection.data.busNumber;
           bookingData.from_location = selection.data.from;
           bookingData.to_location = selection.data.to;
-          bookingData.departure_time = selection.data.departure;
-          bookingData.arrival_time = selection.data.arrival;
+          bookingData.departure_time = selection.data.departure + ':00';
+          bookingData.arrival_time = selection.data.arrival + ':00';
           bookingData.price_inr = selection.data.price;
           bookingData.class_type = selection.data.busType;
           bookingData.seat_number = `${Math.floor(Math.random() * 40) + 1}`;
@@ -242,33 +242,42 @@ export default function Book() {
           bookingData.service_number = `ROOM-${Math.floor(Math.random() * 500) + 100}`;
           bookingData.from_location = selection.data.location;
           bookingData.to_location = selection.data.location;
-          bookingData.departure_time = '14:00';
-          bookingData.arrival_time = '11:00';
+          bookingData.departure_time = '14:00:00';
+          bookingData.arrival_time = '11:00:00';
           bookingData.price_inr = selection.data.price * (itinerary.days?.length || 1);
           bookingData.class_type = `${selection.data.rating} Star`;
         }
 
-        console.log('Booking data being sent:', bookingData);
+        console.log('Sending booking data:', bookingData);
 
         const { data, error } = await supabase.functions.invoke('create-booking', {
           body: bookingData
         });
 
         if (error) {
-          console.error('Booking error:', error);
-          throw error;
+          console.error('Booking error for', selection.type, ':', error);
+          throw new Error(`Failed to book ${selection.type}: ${error.message}`);
         }
 
-        return data;
+        if (!data || !data.booking) {
+          console.error('No booking data returned for', selection.type);
+          throw new Error(`Failed to create ${selection.type} booking`);
+        }
+
+        console.log('Booking successful:', data.booking);
+        return data.booking;
       });
 
-      await Promise.all(bookingPromises);
+      const results = await Promise.all(bookingPromises);
+      console.log('All bookings created:', results);
 
       toast({
         title: "Booking Successful!",
-        description: "Your bookings have been confirmed. Check My Tickets to view details.",
+        description: `${results.length} booking(s) confirmed. Check My Tickets to view details.`,
       });
 
+      // Wait a moment before navigating to ensure data is saved
+      await new Promise(resolve => setTimeout(resolve, 500));
       navigate('/my-tickets');
     } catch (error: any) {
       console.error('Booking error:', error);
