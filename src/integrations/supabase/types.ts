@@ -232,6 +232,36 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          rating: number
+          review_text: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          rating: number
+          review_text: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          rating?: number
+          review_text?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ticket_verifications: {
         Row: {
           booking_id: string

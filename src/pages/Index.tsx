@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import ReviewSection from "@/components/ReviewSection";
+import { Plane } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -29,7 +30,12 @@ const Index = () => {
       {/* Minimalist Header */}
       <header className="border-b border-border/50">
         <div className="container mx-auto px-6 md:px-12 py-5 flex justify-between items-center max-w-7xl">
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">Travexa</h1>
+          <Link to="/" className="flex items-center gap-2 group">
+            <Plane className="h-6 w-6 text-accent transition-transform group-hover:rotate-12" />
+            <h1 className="text-xl font-bold tracking-tight">
+              Trave<span className="text-accent">X</span>a
+            </h1>
+          </Link>
           <div className="flex gap-4">
             <Button variant="ghost" size="sm" asChild className="text-sm">
               <Link to="/login">Login</Link>
@@ -135,13 +141,19 @@ const Index = () => {
             <Link to="/signup">Sign Up</Link>
           </Button>
         </section>
+
+        {/* Review Section */}
+        <ReviewSection />
       </main>
 
       {/* Minimal Footer */}
       <footer className="border-t border-border/50">
         <div className="container mx-auto px-6 md:px-12 py-8 max-w-7xl">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>© {new Date().getFullYear()} Travexa. All rights reserved.</p>
+            <div>
+              <p>© {new Date().getFullYear()} Travexa. All rights reserved.</p>
+              <p className="text-xs mt-1">Made with ❤️ by Rajasekhar</p>
+            </div>
             <div className="flex gap-8">
               <Link to="/login" className="hover:text-foreground transition-colors">Login</Link>
               <Link to="/signup" className="hover:text-foreground transition-colors">Sign Up</Link>
