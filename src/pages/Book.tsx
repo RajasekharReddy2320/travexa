@@ -167,68 +167,75 @@ export default function Book() {
       // Create bookings for each selection
       const bookingPromises = selectedBookings.map(async (selection) => {
         let bookingData: any = {
-          user_id: session.user.id,
           passenger_name: passengerName,
           passenger_email: passengerEmail,
           passenger_phone: passengerPhone,
-          departure_date: itinerary.days?.[0]?.date || new Date().toISOString().split('T')[0],
-          price_inr: 0,
-          from_location: 'Your Location',
+          from_location: destination || 'Destination',
           to_location: destination || 'Destination',
+          departure_date: itinerary.days?.[0]?.date || new Date().toISOString().split('T')[0],
+          departure_time: '09:00',
+          arrival_time: '18:00',
+          service_name: 'Service',
+          service_number: 'SVC001',
+          price_inr: 0,
+          booking_type: 'flight',
         };
 
         if (selection.type === 'flight') {
-          bookingData = {
-            ...bookingData,
-            booking_type: 'flight',
-            service_name: selection.data.airline,
-            service_number: selection.data.flightNumber,
-            departure_time: selection.data.departure,
-            arrival_time: selection.data.arrival,
-            price_inr: selection.data.price,
-            class_type: selection.data.class,
-            seat_number: `${Math.floor(Math.random() * 30) + 1}A`,
-          };
+          bookingData.booking_type = 'flight';
+          bookingData.service_name = selection.data.airline;
+          bookingData.service_number = selection.data.flightNumber;
+          bookingData.from_location = selection.data.from;
+          bookingData.to_location = selection.data.to;
+          bookingData.departure_time = selection.data.departure;
+          bookingData.arrival_time = selection.data.arrival;
+          bookingData.price_inr = selection.data.price;
+          bookingData.class_type = selection.data.class;
+          bookingData.seat_number = `${Math.floor(Math.random() * 30) + 1}A`;
         } else if (selection.type === 'train') {
-          bookingData = {
-            ...bookingData,
-            booking_type: 'train',
-            service_name: selection.data.trainName,
-            service_number: selection.data.trainNumber,
-            departure_time: selection.data.departure,
-            arrival_time: selection.data.arrival,
-            price_inr: selection.data.classes?.[0]?.price || 0,
-            class_type: selection.data.classes?.[0]?.class || 'Sleeper',
-            seat_number: `S${Math.floor(Math.random() * 70) + 1}`,
-          };
+          bookingData.booking_type = 'train';
+          bookingData.service_name = selection.data.trainName;
+          bookingData.service_number = selection.data.trainNumber;
+          bookingData.from_location = selection.data.from;
+          bookingData.to_location = selection.data.to;
+          bookingData.departure_time = selection.data.departure;
+          bookingData.arrival_time = selection.data.arrival;
+          bookingData.price_inr = selection.data.classes?.[0]?.price || 0;
+          bookingData.class_type = selection.data.classes?.[0]?.class || 'Sleeper';
+          bookingData.seat_number = `S${Math.floor(Math.random() * 70) + 1}`;
         } else if (selection.type === 'bus') {
-          bookingData = {
-            ...bookingData,
-            booking_type: 'bus',
-            service_name: selection.data.operator,
-            service_number: selection.data.busNumber,
-            departure_time: selection.data.departure,
-            arrival_time: selection.data.arrival,
-            price_inr: selection.data.price,
-            class_type: selection.data.busType,
-            seat_number: `${Math.floor(Math.random() * 40) + 1}`,
-          };
+          bookingData.booking_type = 'bus';
+          bookingData.service_name = selection.data.operator;
+          bookingData.service_number = selection.data.busNumber;
+          bookingData.from_location = selection.data.from;
+          bookingData.to_location = selection.data.to;
+          bookingData.departure_time = selection.data.departure;
+          bookingData.arrival_time = selection.data.arrival;
+          bookingData.price_inr = selection.data.price;
+          bookingData.class_type = selection.data.busType;
+          bookingData.seat_number = `${Math.floor(Math.random() * 40) + 1}`;
         } else if (selection.type === 'hotel') {
-          bookingData = {
-            ...bookingData,
-            booking_type: 'hotel',
-            service_name: selection.data.name,
-            service_number: `ROOM-${Math.floor(Math.random() * 500) + 100}`,
-            departure_time: '14:00',
-            arrival_time: '11:00',
-            price_inr: selection.data.price * (itinerary.days?.length || 1),
-            class_type: `${selection.data.rating} Star`,
-          };
+          bookingData.booking_type = 'hotel';
+          bookingData.service_name = selection.data.name;
+          bookingData.service_number = `ROOM-${Math.floor(Math.random() * 500) + 100}`;
+          bookingData.from_location = selection.data.location;
+          bookingData.to_location = selection.data.location;
+          bookingData.departure_time = '14:00';
+          bookingData.arrival_time = '11:00';
+          bookingData.price_inr = selection.data.price * (itinerary.days?.length || 1);
+          bookingData.class_type = `${selection.data.rating} Star`;
         }
 
-        const { data } = await supabase.functions.invoke('create-booking', {
+        console.log('Booking data being sent:', bookingData);
+
+        const { data, error } = await supabase.functions.invoke('create-booking', {
           body: bookingData
         });
+
+        if (error) {
+          console.error('Booking error:', error);
+          throw error;
+        }
 
         return data;
       });
