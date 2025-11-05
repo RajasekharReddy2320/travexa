@@ -177,8 +177,16 @@ Provide a day-by-day breakdown with activities, estimated costs in INR, and trav
       });
       
       if (response.status === 429) {
+        const serviceName = aiModel === 'gemini' ? 'Lovable AI' : 'OpenAI';
+        const suggestion = aiModel !== 'gemini' 
+          ? ' Try using Google Gemini model instead, or wait a few minutes before retrying.'
+          : ' Please wait a few minutes before trying again.';
+        
         return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+          JSON.stringify({ 
+            error: `${serviceName} rate limit exceeded.${suggestion}`,
+            suggestModel: aiModel !== 'gemini' ? 'gemini' : undefined
+          }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -190,8 +198,23 @@ Provide a day-by-day breakdown with activities, estimated costs in INR, and trav
         );
       }
       
+      if (response.status === 401) {
+        const serviceName = aiModel === 'gemini' ? 'Lovable AI' : 'OpenAI';
+        return new Response(
+          JSON.stringify({ 
+            error: `${serviceName} authentication failed. Please check your API key configuration.`,
+            suggestModel: aiModel !== 'gemini' ? 'gemini' : undefined
+          }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       return new Response(
-        JSON.stringify({ error: `Failed to generate itinerary: ${errorText}` }),
+        JSON.stringify({ 
+          error: `Failed to generate itinerary. Please try again or switch to a different AI model.`,
+          details: errorText,
+          suggestModel: aiModel !== 'gemini' ? 'gemini' : undefined
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

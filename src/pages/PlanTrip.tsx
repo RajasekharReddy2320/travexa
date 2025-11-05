@@ -95,6 +95,17 @@ export default function PlanTrip() {
       if (error) throw error;
 
       if (data.error) {
+        // If the response suggests using Gemini, automatically switch to it
+        if (data.suggestModel === 'gemini' && aiModel !== 'gemini') {
+          toast({
+            title: "Switching to Gemini",
+            description: "OpenAI rate limit reached. Automatically retrying with Google Gemini...",
+          });
+          setAiModel('gemini');
+          // Retry with Gemini after a short delay
+          setTimeout(() => handleGenerate(regenerateDay), 1000);
+          return;
+        }
         throw new Error(data.error);
       }
 
