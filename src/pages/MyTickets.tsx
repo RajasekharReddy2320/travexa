@@ -4,11 +4,13 @@ import DashboardNav from "@/components/DashboardNav";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plane, Train, Bus, Hotel, QrCode, Download, Calendar, MapPin, User, ScanLine, X } from "lucide-react";
+import { Plane, Train, Bus, Hotel, QrCode, Download, Calendar, MapPin, User, ScanLine, X, Clock } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import QRScanner from "@/components/QRScanner";
+import TripTimeline from "@/components/TripTimeline";
+import TripSharingDialog from "@/components/TripSharingDialog";
 
 export default function MyTickets() {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ export default function MyTickets() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "flight" | "train" | "bus" | "hotel">("all");
   const [activeTab, setActiveTab] = useState<"tickets" | "scanner">("tickets");
+  const [viewMode, setViewMode] = useState<"grid" | "timeline">("grid");
 
   useEffect(() => {
     fetchBookings();
@@ -189,14 +192,35 @@ export default function MyTickets() {
           <QRScanner />
         ) : (
           <>
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
               <div>
                 <h1 className="text-3xl font-bold mb-2">My Tickets</h1>
                 <p className="text-muted-foreground">View and manage your bookings</p>
               </div>
               
-              {/* Filter Buttons */}
-              <div className="flex gap-2">
+              <div className="flex gap-4 items-center flex-wrap">
+                {/* View Mode Toggle */}
+                <div className="flex gap-2">
+                  <Button
+                    variant={viewMode === "grid" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("grid")}
+                  >
+                    Grid
+                  </Button>
+                  <Button
+                    variant={viewMode === "timeline" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("timeline")}
+                    className="gap-2"
+                  >
+                    <Clock className="h-4 w-4" />
+                    Timeline
+                  </Button>
+                </div>
+                
+                {/* Filter Buttons */}
+                <div className="flex gap-2">
                 <Button
                   variant={filter === "all" ? "default" : "outline"}
                   size="sm"
@@ -241,9 +265,30 @@ export default function MyTickets() {
                   <span className="hidden sm:inline">Hotels</span>
                 </Button>
               </div>
+              </div>
             </div>
 
-        <div className="space-y-4">
+            {/* Timeline View */}
+            {viewMode === "timeline" && filteredBookings.length > 0 && (
+              <div className="mb-8">
+                {tripGroups.map((group, groupIndex) => (
+                  <div key={groupIndex} className="mb-6">
+                    {group[0].trip_group_id && (
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold">
+                          Trip Package - {new Date(group[0].departure_date).toLocaleDateString('en-IN')}
+                        </h3>
+                        <TripSharingDialog tripGroupId={group[0].trip_group_id} />
+                      </div>
+                    )}
+                    <TripTimeline bookings={group} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+        {viewMode === "grid" && (
+          <div className="space-y-4">
           {tripGroups.length === 0 ? (
             <Card>
               <CardContent className="py-16 text-center">
@@ -384,11 +429,14 @@ export default function MyTickets() {
                     </div>
 
                     <div className="mt-4 pt-4 border-t">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between flex-wrap gap-4">
                         <div>
                           <p className="text-sm text-muted-foreground">Total Amount</p>
                           <p className="text-2xl font-bold">₹{totalPrice.toLocaleString("en-IN")}</p>
                         </div>
+                        {isMultiBooking && firstBooking.trip_group_id && (
+                          <TripSharingDialog tripGroupId={firstBooking.trip_group_id} />
+                        )}
                         {!isMultiBooking && (
                           <div className="text-right">
                             <p className="text-sm text-muted-foreground">Booking Ref</p>
@@ -439,15 +487,16 @@ export default function MyTickets() {
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
+                         </AlertDialog>
+                       )}
+                     </div>
+                   </CardContent>
+                 </Card>
+                );
+              })
+            )}
+          </div>
+        )}
           </>
         )}
       </div>

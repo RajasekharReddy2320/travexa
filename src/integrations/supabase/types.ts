@@ -404,6 +404,42 @@ export type Database = {
         }
         Relationships: []
       }
+      trip_shares: {
+        Row: {
+          access_level: string
+          created_at: string
+          id: string
+          owner_id: string
+          shared_with_email: string
+          shared_with_user_id: string | null
+          status: string
+          trip_group_id: string
+          updated_at: string
+        }
+        Insert: {
+          access_level: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          shared_with_email: string
+          shared_with_user_id?: string | null
+          status?: string
+          trip_group_id: string
+          updated_at?: string
+        }
+        Update: {
+          access_level?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          shared_with_email?: string
+          shared_with_user_id?: string | null
+          status?: string
+          trip_group_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trips: {
         Row: {
           budget_inr: number | null
