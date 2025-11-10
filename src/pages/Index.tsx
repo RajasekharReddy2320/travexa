@@ -153,18 +153,6 @@ const Index = () => {
           </Card>
         </section>
 
-        {/* CTA Section */}
-        <section className="container mx-auto px-6 py-20 max-w-4xl text-center">
-          <h3 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Join 900+ travelers today
-          </h3>
-          <p className="text-lg text-muted-foreground mb-8">
-            Start planning your next adventure with AI-powered assistance.
-          </p>
-          <Button size="lg" asChild className="px-8">
-            <Link to="/signup">Create Free Account</Link>
-          </Button>
-        </section>
       </main>
 
       {/* Footer */}
