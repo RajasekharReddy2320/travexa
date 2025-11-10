@@ -29,9 +29,9 @@ const Index = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 via-blue-50 to-white dark:from-purple-950/20 dark:via-blue-950/20 dark:to-background">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white/80 dark:bg-background/80 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
+      <header className="bg-card/50 backdrop-blur-sm border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center max-w-6xl">
           <Link to="/" className="flex items-center gap-2 group">
             <Plane className="h-6 w-6 text-primary transition-transform group-hover:rotate-12" />
@@ -56,9 +56,9 @@ const Index = () => {
         <section className="container mx-auto px-6 py-16 md:py-24 max-w-4xl text-center">
           <div className="mb-8 flex justify-center">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-400 rounded-3xl blur-2xl opacity-30"></div>
-              <div className="relative bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-3xl p-12 backdrop-blur-sm">
-                <Plane className="h-24 w-24 text-primary mx-auto" />
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl"></div>
+              <div className="relative">
+                <Plane className="h-24 w-24 text-primary" />
               </div>
             </div>
           </div>
@@ -68,125 +68,107 @@ const Index = () => {
               Welcome to Travexa
             </Badge>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              <span className="text-primary">Simplify</span> your travel planning
+              Your <span className="text-primary">AI-Powered</span> Travel Companion
             </h1>
           </div>
 
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            Discover seamless travel experiences with AI-powered trip planning, connect with fellow travelers, and explore the world with confidence.
+            Plan trips with AI assistance, connect with fellow travelers, and manage all your bookings in one place.
           </p>
 
           <Button size="lg" asChild className="px-8">
-            <Link to="/signup">Get Started</Link>
+            <Link to="/signup">Get Started Free</Link>
           </Button>
         </section>
 
-        {/* Feature Section 1 - Plan */}
-        <section className="container mx-auto px-6 py-16 max-w-5xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Travexa <span className="text-purple-500">Plan</span>
-            </h2>
-            <p className="text-muted-foreground">✨ Your way, your discovery</p>
-          </div>
+        {/* Features Grid */}
+        <section className="container mx-auto px-6 py-16 max-w-6xl">
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">🤖</span>
+                  AI Trip Planning
+                </CardTitle>
+                <CardDescription>
+                  Get personalized itineraries powered by advanced AI
+                </CardDescription>
+              </CardHeader>
+            </Card>
 
-          <div className="flex justify-center gap-2 mb-8">
-            <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-            <div className="w-2 h-2 rounded-full bg-muted"></div>
-            <div className="w-2 h-2 rounded-full bg-muted"></div>
-          </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">👥</span>
+                  Social Features
+                </CardTitle>
+                <CardDescription>
+                  Connect with travelers and share experiences
+                </CardDescription>
+              </CardHeader>
+            </Card>
 
-          <div className="bg-white dark:bg-card rounded-2xl p-8 shadow-lg border border-border/50">
-            <h3 className="text-xl font-semibold mb-4 text-center">
-              Smart Planning with AI-Powered Suggestions
-            </h3>
-            <div className="aspect-video bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl flex items-center justify-center">
-              <img 
-                src="/src/assets/hero-beach.jpg" 
-                alt="Smart Planning" 
-                className="w-full h-full object-cover rounded-xl"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Feature Section 2 - Connect */}
-        <section className="container mx-auto px-6 py-16 max-w-5xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Travexa <span className="text-teal-500">Connect</span>
-            </h2>
-            <p className="text-muted-foreground">📱 Meet fellow travelers</p>
-          </div>
-
-          <div className="flex justify-center gap-2 mb-8">
-            <div className="w-2 h-2 rounded-full bg-muted"></div>
-            <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-            <div className="w-2 h-2 rounded-full bg-muted"></div>
-          </div>
-
-          <div className="bg-white dark:bg-card rounded-2xl p-8 shadow-lg border border-border/50">
-            <h3 className="text-xl font-semibold mb-4 text-center">
-              Social Connection for Better Experiences
-            </h3>
-            <div className="aspect-video bg-gradient-to-br from-teal-100 to-green-100 dark:from-teal-900/30 dark:to-green-900/30 rounded-xl flex items-center justify-center">
-              <img 
-                src="/src/assets/destination-city.jpg" 
-                alt="Social Connection" 
-                className="w-full h-full object-cover rounded-xl"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Feature Section 3 - Book */}
-        <section className="container mx-auto px-6 py-16 max-w-5xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Travexa <span className="text-orange-500">Book</span>
-            </h2>
-            <p className="text-muted-foreground">📂 Save and organize your journey</p>
-          </div>
-
-          <div className="flex justify-center gap-2 mb-8">
-            <div className="w-2 h-2 rounded-full bg-muted"></div>
-            <div className="w-2 h-2 rounded-full bg-muted"></div>
-            <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-          </div>
-
-          <div className="bg-white dark:bg-card rounded-2xl p-8 shadow-lg border border-border/50">
-            <h3 className="text-xl font-semibold mb-4 text-center">
-              Seamless Booking & Management
-            </h3>
-            <div className="aspect-video bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 rounded-xl flex items-center justify-center">
-              <img 
-                src="/src/assets/destination-mountains.jpg" 
-                alt="Seamless Booking" 
-                className="w-full h-full object-cover rounded-xl"
-              />
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">🎫</span>
+                  Easy Booking
+                </CardTitle>
+                <CardDescription>
+                  Book flights, trains, and buses all in one place
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </div>
         </section>
 
         {/* Featured Trips */}
         <FeaturedTrips />
 
+        {/* Feedback Section */}
+        <section className="container mx-auto px-6 py-20 max-w-4xl">
+          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardHeader className="text-center">
+              <CardTitle className="text-3xl mb-4">We'd Love Your Feedback!</CardTitle>
+              <CardDescription className="text-base">
+                Travexa is currently in development. We're building a fully functional travel planning and booking platform.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-lg font-medium text-foreground">
+                Would you use Travexa if it were fully functional?
+              </p>
+              <p className="text-muted-foreground">
+                Your feedback helps us understand what travelers need most. We're working hard to bring you features like AI-powered trip planning, social connections with fellow travelers, and seamless booking experiences.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <Button size="lg" className="px-8">
+                  <Link to="/signup">Yes, Sign Me Up!</Link>
+                </Button>
+                <Button size="lg" variant="outline" className="px-8" asChild>
+                  <Link to="/signup">Maybe, Tell Me More</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* CTA Section */}
         <section className="container mx-auto px-6 py-20 max-w-4xl text-center">
           <h3 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Join 900+ travelers
+            Join 900+ travelers today
           </h3>
           <p className="text-lg text-muted-foreground mb-8">
-            Start today and experience the joy of hassle-free travel.
+            Start planning your next adventure with AI-powered assistance.
           </p>
           <Button size="lg" asChild className="px-8">
-            <Link to="/signup">Sign Up Free</Link>
+            <Link to="/signup">Create Free Account</Link>
           </Button>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 bg-white/50 dark:bg-background/50 backdrop-blur-sm">
+      <footer className="border-t border-border bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-6 py-8 max-w-6xl">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
             <div className="text-center md:text-left">
