@@ -805,7 +805,7 @@ const Profile = () => {
             <CardHeader>
               <CardTitle>Share Your Experience</CardTitle>
               <CardDescription>
-                Help us improve Travexa by sharing your feedback. Your review is private and will only be seen by our team.
+                Travexa is currently in the development stage. Help us improve by sharing your feedback. Your review is private and will only be seen by our team. Would you use Travexa if it were fully functional?
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">

@@ -81,44 +81,87 @@ const Index = () => {
           </Button>
         </section>
 
-        {/* Features Grid */}
+        {/* Why Choose Travexa Section */}
         <section className="container mx-auto px-6 py-16 max-w-6xl">
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="text-2xl">🤖</span>
-                  AI Trip Planning
-                </CardTitle>
-                <CardDescription>
-                  Get personalized itineraries powered by advanced AI
-                </CardDescription>
-              </CardHeader>
-            </Card>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Choose Travexa?</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Your all-in-one travel companion that revolutionizes how you plan, book, and experience your journeys
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="group relative overflow-hidden transition-all duration-300 hover:scale-105">
+              <div className="p-6 backdrop-blur-sm bg-card/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300">
+                <div className="text-4xl mb-4 transition-transform duration-300 group-hover:scale-110">🤖</div>
+                <h3 className="text-xl font-semibold mb-3 transition-all duration-300 group-hover:text-primary">
+                  <span className="inline-block transition-all duration-300 group-hover:scale-110">AI-Powered Planning</span>
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Our advanced AI creates personalized itineraries tailored to your preferences, budget, and travel style. Get instant recommendations for destinations, activities, and hidden gems.
+                </p>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="text-2xl">👥</span>
-                  Social Features
-                </CardTitle>
-                <CardDescription>
-                  Connect with travelers and share experiences
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <div className="group relative overflow-hidden transition-all duration-300 hover:scale-105">
+              <div className="p-6 backdrop-blur-sm bg-card/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300">
+                <div className="text-4xl mb-4 transition-transform duration-300 group-hover:scale-110">🎫</div>
+                <h3 className="text-xl font-semibold mb-3 transition-all duration-300 group-hover:text-primary">
+                  <span className="inline-block transition-all duration-300 group-hover:scale-110">Unified Booking</span>
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Book flights, trains, and buses from multiple providers in one place. Compare prices, check availability, and secure the best deals without switching between different platforms.
+                </p>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="text-2xl">🎫</span>
-                  Easy Booking
-                </CardTitle>
-                <CardDescription>
-                  Book flights, trains, and buses all in one place
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <div className="group relative overflow-hidden transition-all duration-300 hover:scale-105">
+              <div className="p-6 backdrop-blur-sm bg-card/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300">
+                <div className="text-4xl mb-4 transition-transform duration-300 group-hover:scale-110">💰</div>
+                <h3 className="text-xl font-semibold mb-3 transition-all duration-300 group-hover:text-primary">
+                  <span className="inline-block transition-all duration-300 group-hover:scale-110">Best Price Guarantee</span>
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Our smart algorithms scan hundreds of options to find you the best prices. Save money with our exclusive deals and flexible booking options that fit your budget.
+                </p>
+              </div>
+            </div>
+
+            <div className="group relative overflow-hidden transition-all duration-300 hover:scale-105">
+              <div className="p-6 backdrop-blur-sm bg-card/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300">
+                <div className="text-4xl mb-4 transition-transform duration-300 group-hover:scale-110">👥</div>
+                <h3 className="text-xl font-semibold mb-3 transition-all duration-300 group-hover:text-primary">
+                  <span className="inline-block transition-all duration-300 group-hover:scale-110">Social Travel Network</span>
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Connect with fellow travelers, share experiences, and discover trips through our vibrant community. Find travel buddies and get inspired by real travelers' stories.
+                </p>
+              </div>
+            </div>
+
+            <div className="group relative overflow-hidden transition-all duration-300 hover:scale-105">
+              <div className="p-6 backdrop-blur-sm bg-card/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300">
+                <div className="text-4xl mb-4 transition-transform duration-300 group-hover:scale-110">📱</div>
+                <h3 className="text-xl font-semibold mb-3 transition-all duration-300 group-hover:text-primary">
+                  <span className="inline-block transition-all duration-300 group-hover:scale-110">All-in-One Dashboard</span>
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Manage all your bookings, itineraries, and travel documents in one intuitive dashboard. Access your tickets offline and get real-time updates on your journeys.
+                </p>
+              </div>
+            </div>
+
+            <div className="group relative overflow-hidden transition-all duration-300 hover:scale-105">
+              <div className="p-6 backdrop-blur-sm bg-card/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300">
+                <div className="text-4xl mb-4 transition-transform duration-300 group-hover:scale-110">⚡</div>
+                <h3 className="text-xl font-semibold mb-3 transition-all duration-300 group-hover:text-primary">
+                  <span className="inline-block transition-all duration-300 group-hover:scale-110">Lightning Fast Search</span>
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Get instant results from thousands of routes and operators. Our optimized search engine delivers comprehensive options in seconds, making booking effortless and efficient.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
