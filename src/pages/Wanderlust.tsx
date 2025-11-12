@@ -67,16 +67,15 @@ const Wanderlust = () => {
   };
 
   const loadPosts = async () => {
+    // @ts-ignore - Types file needs regeneration
     const { data, error } = await supabase
       .from("posts")
       .select(`
-        id,
-        content,
-        image_url,
-        likes_count,
-        comments_count,
-        created_at,
-        profiles:user_id (full_name, avatar_url)
+        *,
+        profiles:user_id (
+          full_name,
+          avatar_url
+        )
       `)
       .order("created_at", { ascending: false });
 
@@ -94,18 +93,15 @@ const Wanderlust = () => {
   };
 
   const loadTravelGroups = async () => {
+    // @ts-ignore - Types file needs regeneration
     const { data, error } = await supabase
       .from("travel_groups")
       .select(`
-        id,
-        title,
-        from_location,
-        to_location,
-        travel_date,
-        travel_mode,
-        max_members,
-        description,
-        profiles:creator_id (full_name, avatar_url)
+        *,
+        profiles:creator_id (
+          full_name,
+          avatar_url
+        )
       `)
       .gte("travel_date", new Date().toISOString().split("T")[0])
       .order("travel_date", { ascending: true });
@@ -117,7 +113,8 @@ const Wanderlust = () => {
 
     // Get member counts
     const groupsWithCounts = await Promise.all(
-      (data || []).map(async (group) => {
+      (data || []).map(async (group: any) => {
+        // @ts-ignore - Types file needs regeneration
         const { count } = await supabase
           .from("travel_group_members")
           .select("*", { count: "exact", head: true })
@@ -132,9 +129,13 @@ const Wanderlust = () => {
   };
 
   const loadUserInteractions = async (userId: string) => {
+    // @ts-ignore - Types file needs regeneration
     const [likesData, savesData, membershipsData] = await Promise.all([
+      // @ts-ignore
       supabase.from("post_likes").select("post_id").eq("user_id", userId),
+      // @ts-ignore
       supabase.from("post_saves").select("post_id").eq("user_id", userId),
+      // @ts-ignore
       supabase.from("travel_group_members").select("group_id").eq("user_id", userId).eq("status", "accepted"),
     ]);
 

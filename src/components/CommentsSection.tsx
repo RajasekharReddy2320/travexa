@@ -29,6 +29,7 @@ export const CommentsSection = ({ postId, currentUserId, onCommentAdded }: Comme
   const { toast } = useToast();
 
   const loadComments = async () => {
+    // @ts-ignore - Types file needs regeneration
     const { data, error } = await supabase
       .from("post_comments")
       .select(`
@@ -76,6 +77,7 @@ export const CommentsSection = ({ postId, currentUserId, onCommentAdded }: Comme
 
     setIsLoading(true);
     try {
+      // @ts-ignore - Types file needs regeneration
       const { error } = await supabase.from("post_comments").insert({
         post_id: postId,
         user_id: currentUserId,

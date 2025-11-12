@@ -34,12 +34,14 @@ export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }
   const handleLike = async () => {
     try {
       if (userLiked) {
+        // @ts-ignore - Types file needs regeneration
         await supabase
           .from("post_likes")
           .delete()
           .eq("post_id", post.id)
           .eq("user_id", currentUserId);
       } else {
+        // @ts-ignore - Types file needs regeneration
         await supabase.from("post_likes").insert({
           post_id: post.id,
           user_id: currentUserId,
@@ -58,12 +60,14 @@ export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }
   const handleSave = async () => {
     try {
       if (userSaved) {
+        // @ts-ignore - Types file needs regeneration
         await supabase
           .from("post_saves")
           .delete()
           .eq("post_id", post.id)
           .eq("user_id", currentUserId);
       } else {
+        // @ts-ignore - Types file needs regeneration
         await supabase.from("post_saves").insert({
           post_id: post.id,
           user_id: currentUserId,
