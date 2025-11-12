@@ -12,16 +12,16 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is authenticated and redirect to dashboard
+    // Check if user is authenticated and redirect to Wanderlust
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/dashboard");
+        navigate("/");
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/dashboard");
+        navigate("/");
       }
     });
 

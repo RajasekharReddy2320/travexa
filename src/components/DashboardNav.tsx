@@ -63,9 +63,9 @@ const DashboardNav = () => {
             </Link>
 
             <Link
-              to="/dashboard"
+              to="/plan-trip"
               className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
-                isActive("/dashboard")
+                isActive("/plan-trip")
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
               }`}

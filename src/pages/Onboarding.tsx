@@ -47,7 +47,7 @@ const Onboarding = () => {
       .single();
 
     if (data?.onboarding_completed) {
-      navigate('/dashboard');
+      navigate('/');
     }
   };
 
@@ -98,7 +98,7 @@ const Onboarding = () => {
         description: 'Your preferences have been saved',
       });
 
-      navigate('/dashboard');
+      navigate('/');
     } catch (error: any) {
       toast({
         title: 'Error',

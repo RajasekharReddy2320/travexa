@@ -187,7 +187,7 @@ export default function PlanTrip() {
       description: "Trip saved successfully!"
     });
 
-    navigate("/dashboard");
+    navigate("/plan-trip");
   };
 
   return (

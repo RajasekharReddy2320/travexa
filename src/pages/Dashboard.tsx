@@ -145,7 +145,7 @@ const Dashboard = () => {
           <div className="relative h-full flex flex-col justify-center px-8 text-white">
             <h1 className="text-4xl font-bold mb-2">Welcome to Travexa!</h1>
             <p className="text-lg mb-4">Connect. Plan. Explore.</p>
-            <Button size="lg" className="w-fit" onClick={() => navigate('/plan-trip')}>
+            <Button size="lg" className="w-fit" onClick={() => navigate('/ai-planner')}>
               <Sparkles className="mr-2 h-5 w-5" />
               Plan Your Trip
             </Button>
@@ -166,7 +166,7 @@ const Dashboard = () => {
           <CardContent>
             <Button 
               size="lg"
-              onClick={() => navigate('/plan-trip')}
+              onClick={() => navigate('/ai-planner')}
             >
               Start AI Planning
             </Button>
@@ -202,7 +202,7 @@ const Dashboard = () => {
                 <p className="text-muted-foreground text-center mb-4">
                   No trips yet. Start planning your first adventure!
                 </p>
-                <Button onClick={() => navigate('/plan-trip')}>
+                <Button onClick={() => navigate('/ai-planner')}>
                   <Sparkles className="mr-2 h-4 w-4" />
                   Plan Your First Trip
                 </Button>

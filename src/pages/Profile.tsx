@@ -8,11 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, MapPin, Globe, Calendar, LogOut, MessageCircle, UserPlus, UserCheck, UserMinus, Lock, Unlock, X, Star } from "lucide-react";
+import { User, Mail, Phone, MapPin, Globe, Calendar, LogOut, MessageCircle, UserPlus, UserCheck, UserMinus, Lock, Unlock, X, Star, FileText, Users as UsersIcon, Ticket } from "lucide-react";
 import DashboardNav from "@/components/DashboardNav";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { z } from "zod";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PostCard } from "@/components/PostCard";
+import { TravelGroupCard } from "@/components/TravelGroupCard";
+import { formatDistanceToNow } from "date-fns";
 
 const reviewSchema = z.object({
   rating: z.number().min(1, "Please select a rating").max(5),
@@ -59,6 +63,14 @@ const Profile = () => {
   const [reviewText, setReviewText] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
+  // Social activity state
+  const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [userGroups, setUserGroups] = useState<any[]>([]);
+  const [userBookings, setUserBookings] = useState<any[]>([]);
+  const [userLikes, setUserLikes] = useState<Set<string>>(new Set());
+  const [userSaves, setUserSaves] = useState<Set<string>>(new Set());
+  const [userGroupMemberships, setUserGroupMemberships] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     checkAuth();
   }, [userId]);
@@ -78,6 +90,7 @@ const Profile = () => {
     
     await loadProfile(targetUserId);
     await loadUserActivity(targetUserId);
+    await loadSocialActivity(targetUserId, session.user.id);
     
     if (!isOwn) {
       await loadConnectionStatus(session.user.id, targetUserId);
@@ -206,6 +219,91 @@ const Profile = () => {
 
     if (trips) {
       setUserTrips(trips);
+    }
+  };
+
+  const loadSocialActivity = async (targetUserId: string, currentId: string) => {
+    // Load user's posts
+    const { data: posts } = await supabase
+      .from("posts")
+      .select(`
+        *,
+        profiles:user_id (
+          full_name,
+          avatar_url
+        )
+      `)
+      .eq("user_id", targetUserId)
+      .order("created_at", { ascending: false });
+
+    if (posts) {
+      setUserPosts(posts);
+    }
+
+    // Load user's travel groups (created)
+    const { data: groups } = await supabase
+      .from("travel_groups")
+      .select(`
+        *,
+        profiles:creator_id (
+          full_name,
+          avatar_url
+        )
+      `)
+      .eq("creator_id", targetUserId)
+      .order("created_at", { ascending: false });
+
+    if (groups) {
+      const groupsWithCounts = await Promise.all(
+        (groups || []).map(async (group: any) => {
+          const { count } = await supabase
+            .from("travel_group_members")
+            .select("*", { count: "exact", head: true })
+            .eq("group_id", group.id)
+            .eq("status", "accepted");
+
+          return { ...group, member_count: count || 0 };
+        })
+      );
+      setUserGroups(groupsWithCounts);
+    }
+
+    // Load user's bookings
+    const { data: bookings } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("user_id", targetUserId)
+      .order("created_at", { ascending: false });
+
+    if (bookings) {
+      setUserBookings(bookings);
+    }
+
+    // Load current user's interactions
+    if (currentId) {
+      const [likesData, savesData, membershipsData] = await Promise.all([
+        supabase.from("post_likes").select("post_id").eq("user_id", currentId),
+        supabase.from("post_saves").select("post_id").eq("user_id", currentId),
+        supabase.from("travel_group_members").select("group_id").eq("user_id", currentId).eq("status", "accepted"),
+      ]);
+
+      if (likesData.data) setUserLikes(new Set(likesData.data.map((l: any) => l.post_id)));
+      if (savesData.data) setUserSaves(new Set(savesData.data.map((s: any) => s.post_id)));
+      if (membershipsData.data) setUserGroupMemberships(new Set(membershipsData.data.map((m: any) => m.group_id)));
+    }
+  };
+
+  const handlePostUpdate = () => {
+    if (currentUserId) {
+      const targetUserId = userId || currentUserId;
+      loadSocialActivity(targetUserId, currentUserId);
+    }
+  };
+
+  const handleGroupUpdate = () => {
+    if (currentUserId) {
+      const targetUserId = userId || currentUserId;
+      loadSocialActivity(targetUserId, currentUserId);
     }
   };
 
@@ -738,65 +836,127 @@ const Profile = () => {
           </Card>
         )}
 
-        {/* Activity Section - Only show if own profile or connected */}
+        {/* Social Activity Section - Only show if own profile or connected */}
         {(isOwnProfile || connectionStatus === 'connected') && (
           <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Your Activity</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-semibold mb-2">Liked Trips ({likedTrips.length})</h3>
-              {likedTrips.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {likedTrips.slice(0, 4).map((trip: any) => (
-                    <Card key={trip.id} className="p-3">
-                      <p className="font-medium text-sm truncate">{trip.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">{trip.destination}</p>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No liked trips yet</p>
-              )}
-            </div>
+            <CardHeader>
+              <CardTitle>{isOwnProfile ? "My Activity" : "Activity"}</CardTitle>
+              <CardDescription>
+                {isOwnProfile ? "Your posts, groups, and travel history" : `${profile.full_name}'s activity`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="posts" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="posts" className="gap-2">
+                    <FileText className="h-4 w-4" />
+                    Posts ({userPosts.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="groups" className="gap-2">
+                    <UsersIcon className="h-4 w-4" />
+                    Groups ({userGroups.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="bookings" className="gap-2">
+                    <Ticket className="h-4 w-4" />
+                    Travel History ({userBookings.length})
+                  </TabsTrigger>
+                </TabsList>
 
-            <div>
-              <h3 className="font-semibold mb-2">Bucket List ({bucketList.length})</h3>
-              {bucketList.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {bucketList.slice(0, 4).map((trip: any) => (
-                    <Card key={trip.id} className="p-3">
-                      <p className="font-medium text-sm truncate">{trip.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">{trip.destination}</p>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No saved trips yet</p>
-              )}
-            </div>
+                <TabsContent value="posts" className="space-y-4 mt-4">
+                  {userPosts.length === 0 ? (
+                    <div className="text-center py-8">
+                      <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-muted-foreground">No posts yet</p>
+                    </div>
+                  ) : (
+                    userPosts.map((post) => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        currentUserId={currentUserId}
+                        userLiked={userLikes.has(post.id)}
+                        userSaved={userSaves.has(post.id)}
+                        onUpdate={handlePostUpdate}
+                      />
+                    ))
+                  )}
+                </TabsContent>
 
-            <div>
-              <h3 className="font-semibold mb-2">Your Trips ({userTrips.length})</h3>
-              {userTrips.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {userTrips.slice(0, 4).map((trip: any) => (
-                    <Card key={trip.id} className="p-3">
-                      <p className="font-medium text-sm truncate">{trip.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">{trip.destination}</p>
-                      <Badge variant={trip.is_public ? "default" : "secondary"} className="text-xs mt-1">
-                        {trip.is_public ? "Public" : "Private"}
-                      </Badge>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No trips created yet</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                <TabsContent value="groups" className="space-y-4 mt-4">
+                  {userGroups.length === 0 ? (
+                    <div className="text-center py-8">
+                      <UsersIcon className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-muted-foreground">No travel groups created yet</p>
+                    </div>
+                  ) : (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {userGroups.map((group) => (
+                        <TravelGroupCard
+                          key={group.id}
+                          group={group}
+                          currentUserId={currentUserId}
+                          isMember={userGroupMemberships.has(group.id)}
+                          onUpdate={handleGroupUpdate}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="bookings" className="space-y-4 mt-4">
+                  {userBookings.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Ticket className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-muted-foreground">No travel history yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {userBookings.map((booking) => (
+                        <Card key={booking.id}>
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <CardTitle className="text-base">
+                                  {booking.from_location} → {booking.to_location}
+                                </CardTitle>
+                                <CardDescription className="capitalize">
+                                  {booking.booking_type} • {booking.service_name}
+                                </CardDescription>
+                              </div>
+                              <Badge variant={booking.status === "confirmed" ? "default" : "secondary"}>
+                                {booking.status}
+                              </Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span>
+                                {new Date(booking.departure_date).toLocaleDateString()} at{" "}
+                                {booking.departure_time}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-muted-foreground" />
+                              <span>{booking.passenger_name}</span>
+                            </div>
+                            <div className="font-semibold text-primary">
+                              ₹{parseFloat(booking.price_inr).toLocaleString("en-IN")}
+                            </div>
+                            {booking.booking_reference && (
+                              <div className="text-xs text-muted-foreground">
+                                Ref: {booking.booking_reference}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         )}
 
         {/* App Review Section - Only for own profile */}

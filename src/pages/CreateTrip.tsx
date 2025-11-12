@@ -74,7 +74,7 @@ const CreateTrip = () => {
       description: "Trip created successfully!"
     });
 
-    navigate("/dashboard");
+    navigate("/plan-trip");
   };
 
   return (
@@ -206,7 +206,7 @@ const CreateTrip = () => {
                     </>
                   )}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>
+                <Button type="button" variant="outline" onClick={() => navigate("/plan-trip")}>
                   Cancel
                 </Button>
               </div>
