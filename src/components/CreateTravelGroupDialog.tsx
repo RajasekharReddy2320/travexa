@@ -32,25 +32,34 @@ export const CreateTravelGroupDialog = ({ onGroupCreated }: { onGroupCreated: ()
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("travel_groups").insert({
-        creator_id: user.id,
-        title: formData.title,
-        from_location: formData.from_location,
-        to_location: formData.to_location,
-        travel_date: formData.travel_date,
-        travel_mode: formData.travel_mode,
-        max_members: parseInt(formData.max_members),
-        description: formData.description || null,
-      });
+      const { data: newGroup, error } = await supabase
+        .from("travel_groups")
+        .insert({
+          creator_id: user.id,
+          title: formData.title,
+          from_location: formData.from_location,
+          to_location: formData.to_location,
+          travel_date: formData.travel_date,
+          travel_mode: formData.travel_mode,
+          max_members: parseInt(formData.max_members),
+          description: formData.description || null,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+      if (!newGroup) throw new Error("Failed to create group");
 
       // Auto-join the creator
-      await supabase.from("travel_group_members").insert({
-        group_id: (await supabase.from("travel_groups").select("id").eq("creator_id", user.id).order("created_at", { ascending: false }).limit(1).single()).data?.id,
-        user_id: user.id,
-        status: "accepted",
-      });
+      const { error: memberError } = await supabase
+        .from("travel_group_members")
+        .insert({
+          group_id: newGroup.id,
+          user_id: user.id,
+          status: "accepted",
+        });
+
+      if (memberError) throw memberError;
 
       toast({ title: "Travel group created successfully!" });
       setFormData({
