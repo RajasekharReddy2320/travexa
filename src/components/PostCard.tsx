@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2, Bookmark, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, Bookmark, Trash2, MapPin, Calendar, Plane, IndianRupee } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,9 +15,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { CommentsSection } from "./CommentsSection";
 
 interface PostCardProps {
@@ -24,6 +26,7 @@ interface PostCardProps {
     id: string;
     content: string;
     image_url: string | null;
+    itinerary?: any;
     likes_count: number;
     comments_count: number;
     created_at: string;
@@ -41,7 +44,28 @@ interface PostCardProps {
 
 export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }: PostCardProps) => {
   const [showComments, setShowComments] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleBookItinerary = () => {
+    if (!post.itinerary) return;
+    
+    // Navigate to booking page with itinerary details pre-filled
+    navigate("/book-transport", {
+      state: {
+        fromItinerary: true,
+        destination: post.itinerary.destination,
+        startDate: post.itinerary.startDate,
+        endDate: post.itinerary.endDate,
+        transportation: post.itinerary.transportation,
+      },
+    });
+    
+    toast({
+      title: "Redirecting to booking...",
+      description: "Pre-filling details from this itinerary",
+    });
+  };
 
   const handleLike = async () => {
     try {
@@ -166,6 +190,77 @@ export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }
             alt="Post"
             className="w-full rounded-lg object-cover max-h-96"
           />
+        )}
+        
+        {post.itinerary && (
+          <div className="border rounded-lg p-4 bg-muted/30 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-lg flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-primary" />
+                Travel Itinerary
+              </h3>
+              <Badge variant="secondary">Bookable</Badge>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2 text-sm">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Destination</p>
+                  <p className="font-medium">{post.itinerary.destination}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 text-sm">
+                <Plane className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Transportation</p>
+                  <p className="font-medium">{post.itinerary.transportation}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 text-sm">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Travel Dates</p>
+                  <p className="font-medium">
+                    {format(new Date(post.itinerary.startDate), "MMM dd")} - {format(new Date(post.itinerary.endDate), "MMM dd, yyyy")}
+                  </p>
+                </div>
+              </div>
+              
+              {post.itinerary.estimatedBudget > 0 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <IndianRupee className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Budget</p>
+                    <p className="font-medium">₹{post.itinerary.estimatedBudget.toLocaleString()}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {post.itinerary.activities && post.itinerary.activities.length > 0 && (
+              <div className="text-sm">
+                <p className="text-xs text-muted-foreground mb-1">Activities</p>
+                <div className="flex flex-wrap gap-1">
+                  {post.itinerary.activities.map((activity: string, idx: number) => (
+                    <Badge key={idx} variant="outline" className="text-xs">
+                      {activity}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <Button 
+              onClick={handleBookItinerary}
+              className="w-full gap-2"
+            >
+              <Plane className="h-4 w-4" />
+              Book This Trip
+            </Button>
+          </div>
         )}
       </CardContent>
       <CardFooter className="flex flex-col gap-3 pt-3 border-t">

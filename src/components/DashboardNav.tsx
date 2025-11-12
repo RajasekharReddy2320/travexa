@@ -63,18 +63,6 @@ const DashboardNav = () => {
             </Link>
 
             <Link
-              to="/plan-trip"
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
-                isActive("/plan-trip")
-                  ? "bg-accent text-accent-foreground"
-                  : "hover:bg-accent/50"
-              }`}
-            >
-              <Plane className="h-4 w-4" />
-              <span className="hidden lg:inline-block">AI Trip Planner</span>
-            </Link>
-
-            <Link
               to="/connections"
               className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
                 isActive("/connections")
@@ -141,6 +129,18 @@ const DashboardNav = () => {
             >
               <User className="h-4 w-4" />
               <span className="hidden lg:inline-block">Profile</span>
+            </Link>
+
+            <Link
+              to="/plan-trip"
+              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+                isActive("/plan-trip")
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent/50"
+              }`}
+            >
+              <Plane className="h-4 w-4" />
+              <span className="hidden lg:inline-block">AI Trip Planner</span>
             </Link>
           </div>
         )}

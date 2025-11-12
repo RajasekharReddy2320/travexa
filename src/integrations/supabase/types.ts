@@ -323,6 +323,7 @@ export type Database = {
           created_at: string | null
           id: string
           image_url: string | null
+          itinerary: Json | null
           likes_count: number | null
           updated_at: string | null
           user_id: string
@@ -333,6 +334,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_url?: string | null
+          itinerary?: Json | null
           likes_count?: number | null
           updated_at?: string | null
           user_id: string
@@ -343,6 +345,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_url?: string | null
+          itinerary?: Json | null
           likes_count?: number | null
           updated_at?: string | null
           user_id?: string
