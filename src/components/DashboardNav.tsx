@@ -71,7 +71,7 @@ const DashboardNav = () => {
               }`}
             >
               <Plane className="h-4 w-4" />
-              <span className="hidden lg:inline-block">Dashboard</span>
+              <span className="hidden lg:inline-block">AI Trip Planner</span>
             </Link>
 
             <Link
