@@ -63,7 +63,7 @@ export const CreatePostDialog = ({ onPostCreated }: { onPostCreated: () => void 
         imageUrl = publicUrl;
       }
 
-      const { error } = await (supabase as any).from("posts").insert({
+      const { error } = await supabase.from("posts").insert({
         user_id: user.id,
         content: content.trim(),
         image_url: imageUrl,

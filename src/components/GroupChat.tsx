@@ -53,7 +53,7 @@ export const GroupChat = ({ groupId, groupTitle, open, onOpenChange }: GroupChat
   };
 
   const loadMessages = async () => {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("group_messages")
       .select(`
         id,
@@ -105,7 +105,7 @@ export const GroupChat = ({ groupId, groupTitle, open, onOpenChange }: GroupChat
 
     setIsLoading(true);
     try {
-      const { error } = await (supabase as any).from("group_messages").insert({
+      const { error } = await supabase.from("group_messages").insert({
         group_id: groupId,
         user_id: currentUserId,
         content: newMessage.trim(),

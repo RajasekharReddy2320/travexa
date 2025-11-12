@@ -37,14 +37,14 @@ export const TravelGroupCard = ({ group, currentUserId, isMember, onUpdate }: Tr
   const handleJoin = async () => {
     try {
       if (isMember) {
-        await (supabase as any)
+        await supabase
           .from("travel_group_members")
           .delete()
           .eq("group_id", group.id)
           .eq("user_id", currentUserId);
         toast({ title: "Left the group" });
       } else {
-        await (supabase as any).from("travel_group_members").insert({
+        await supabase.from("travel_group_members").insert({
           group_id: group.id,
           user_id: currentUserId,
           status: "accepted",

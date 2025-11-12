@@ -32,7 +32,7 @@ export const CreateTravelGroupDialog = ({ onGroupCreated }: { onGroupCreated: ()
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: newGroup, error } = await (supabase as any)
+      const { data: newGroup, error } = await supabase
         .from("travel_groups")
         .insert({
           creator_id: user.id,
@@ -51,7 +51,7 @@ export const CreateTravelGroupDialog = ({ onGroupCreated }: { onGroupCreated: ()
       if (!newGroup) throw new Error("Failed to create group");
 
       // Auto-join the creator
-      const { error: memberError } = await (supabase as any)
+      const { error: memberError } = await supabase
         .from("travel_group_members")
         .insert({
           group_id: newGroup.id,

@@ -67,7 +67,7 @@ const Wanderlust = () => {
   };
 
   const loadPosts = async () => {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("posts")
       .select(`
         *,
@@ -92,7 +92,7 @@ const Wanderlust = () => {
   };
 
   const loadTravelGroups = async () => {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("travel_groups")
       .select(`
         *,
@@ -127,9 +127,9 @@ const Wanderlust = () => {
 
   const loadUserInteractions = async (userId: string) => {
     const [likesData, savesData, membershipsData] = await Promise.all([
-      (supabase as any).from("post_likes").select("post_id").eq("user_id", userId),
-      (supabase as any).from("post_saves").select("post_id").eq("user_id", userId),
-      (supabase as any).from("travel_group_members").select("group_id").eq("user_id", userId).eq("status", "accepted"),
+      supabase.from("post_likes").select("post_id").eq("user_id", userId),
+      supabase.from("post_saves").select("post_id").eq("user_id", userId),
+      supabase.from("travel_group_members").select("group_id").eq("user_id", userId).eq("status", "accepted"),
     ]);
 
     if (likesData.data) setUserLikes(new Set(likesData.data.map((l: any) => l.post_id)));

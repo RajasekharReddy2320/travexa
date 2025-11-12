@@ -34,13 +34,13 @@ export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }
   const handleLike = async () => {
     try {
       if (userLiked) {
-        await (supabase as any)
+        await supabase
           .from("post_likes")
           .delete()
           .eq("post_id", post.id)
           .eq("user_id", currentUserId);
       } else {
-        await (supabase as any).from("post_likes").insert({
+        await supabase.from("post_likes").insert({
           post_id: post.id,
           user_id: currentUserId,
         });
@@ -58,13 +58,13 @@ export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }
   const handleSave = async () => {
     try {
       if (userSaved) {
-        await (supabase as any)
+        await supabase
           .from("post_saves")
           .delete()
           .eq("post_id", post.id)
           .eq("user_id", currentUserId);
       } else {
-        await (supabase as any).from("post_saves").insert({
+        await supabase.from("post_saves").insert({
           post_id: post.id,
           user_id: currentUserId,
         });
