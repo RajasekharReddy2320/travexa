@@ -26,7 +26,7 @@ const DashboardNav = () => {
     <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center gap-4 px-4">
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-2 font-bold text-xl group">
+        <Link to="/" className="flex items-center gap-2 font-bold text-xl group">
           <Plane className="h-6 w-6 text-accent transition-transform group-hover:rotate-12" />
           <span className="hidden sm:inline-block">
             Trave<span className="text-accent">X</span>a
@@ -51,6 +51,18 @@ const DashboardNav = () => {
         {isNavExpanded && (
           <div className="flex items-center gap-1">
             <Link
+              to="/"
+              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+                isActive("/")
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent/50"
+              }`}
+            >
+              <Compass className="h-4 w-4" />
+              <span className="hidden lg:inline-block">Wanderlust</span>
+            </Link>
+
+            <Link
               to="/dashboard"
               className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
                 isActive("/dashboard")
@@ -59,19 +71,7 @@ const DashboardNav = () => {
               }`}
             >
               <Plane className="h-4 w-4" />
-              <span className="hidden lg:inline-block">Home</span>
-            </Link>
-
-            <Link
-              to="/wanderlust"
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
-                isActive("/wanderlust")
-                  ? "bg-accent text-accent-foreground"
-                  : "hover:bg-accent/50"
-              }`}
-            >
-              <Compass className="h-4 w-4" />
-              <span className="hidden lg:inline-block">Wanderlust</span>
+              <span className="hidden lg:inline-block">Dashboard</span>
             </Link>
 
             <Link
