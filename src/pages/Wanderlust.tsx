@@ -16,6 +16,7 @@ interface Post {
   likes_count: number;
   comments_count: number;
   created_at: string;
+  user_id: string;
   profiles: {
     full_name: string | null;
     avatar_url: string | null;
@@ -31,6 +32,7 @@ interface TravelGroup {
   travel_mode: string;
   max_members: number;
   description: string | null;
+  creator_id: string;
   profiles: {
     full_name: string | null;
     avatar_url: string | null;

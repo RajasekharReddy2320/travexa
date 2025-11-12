@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send } from "lucide-react";
+import { Send, Plane } from "lucide-react";
+import { GroupTripPlanner } from "./GroupTripPlanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -23,15 +24,20 @@ interface Message {
 interface GroupChatProps {
   groupId: string;
   groupTitle: string;
+  fromLocation: string;
+  toLocation: string;
+  travelDate: string;
+  travelMode: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const GroupChat = ({ groupId, groupTitle, open, onOpenChange }: GroupChatProps) => {
+export const GroupChat = ({ groupId, groupTitle, fromLocation, toLocation, travelDate, travelMode, open, onOpenChange }: GroupChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [plannerOpen, setPlannerOpen] = useState(false);
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -131,11 +137,23 @@ export const GroupChat = ({ groupId, groupTitle, open, onOpenChange }: GroupChat
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] h-[600px] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>{groupTitle} - Group Chat</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[600px] h-[600px] flex flex-col">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle>{groupTitle} - Group Chat</DialogTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPlannerOpen(true)}
+                className="gap-2"
+              >
+                <Plane className="h-4 w-4" />
+                Plan Trip
+              </Button>
+            </div>
+          </DialogHeader>
         
         <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
           <div className="space-y-4">
@@ -196,7 +214,19 @@ export const GroupChat = ({ groupId, groupTitle, open, onOpenChange }: GroupChat
             <Send className="h-4 w-4" />
           </Button>
         </form>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <GroupTripPlanner
+        groupId={groupId}
+        groupTitle={groupTitle}
+        fromLocation={fromLocation}
+        toLocation={toLocation}
+        travelDate={travelDate}
+        travelMode={travelMode}
+        open={plannerOpen}
+        onOpenChange={setPlannerOpen}
+      />
+    </>
   );
 };

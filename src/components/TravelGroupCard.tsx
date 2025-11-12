@@ -3,7 +3,18 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, MapPin, Calendar, Plane, Train, Bus, MessageCircle } from "lucide-react";
+import { Users, MapPin, Calendar, Plane, Train, Bus, MessageCircle, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -19,6 +30,7 @@ interface TravelGroupCardProps {
     travel_mode: string;
     max_members: number;
     description: string | null;
+    creator_id: string;
     profiles: {
       full_name: string | null;
       avatar_url: string | null;
@@ -61,6 +73,26 @@ export const TravelGroupCard = ({ group, currentUserId, isMember, onUpdate }: Tr
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from("travel_groups")
+        .delete()
+        .eq("id", group.id);
+
+      if (error) throw error;
+
+      toast({ title: "Travel group deleted successfully" });
+      onUpdate();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting group",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const getModeIcon = () => {
     switch (group.travel_mode) {
       case "flight": return <Plane className="h-4 w-4" />;
@@ -74,6 +106,8 @@ export const TravelGroupCard = ({ group, currentUserId, isMember, onUpdate }: Tr
     if (!name) return "U";
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
+
+  const isCreator = group.creator_id === currentUserId;
 
   return (
     <Card>
@@ -93,10 +127,33 @@ export const TravelGroupCard = ({ group, currentUserId, isMember, onUpdate }: Tr
               </span>
             </div>
           </div>
-          <Badge variant="secondary" className="gap-1">
-            <Users className="h-3 w-3" />
-            {group.member_count}/{group.max_members}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="gap-1">
+              <Users className="h-3 w-3" />
+              {group.member_count}/{group.max_members}
+            </Badge>
+            {isCreator && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Travel Group</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this travel group? All members will be removed and this action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -142,6 +199,10 @@ export const TravelGroupCard = ({ group, currentUserId, isMember, onUpdate }: Tr
       <GroupChat
         groupId={group.id}
         groupTitle={group.title}
+        fromLocation={group.from_location}
+        toLocation={group.to_location}
+        travelDate={group.travel_date}
+        travelMode={group.travel_mode}
         open={chatOpen}
         onOpenChange={setChatOpen}
       />
