@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, MapPin, Calendar, Plane, Train, Bus } from "lucide-react";
+import { Users, MapPin, Calendar, Plane, Train, Bus, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { GroupChat } from "./GroupChat";
 
 interface TravelGroupCardProps {
   group: {
@@ -29,6 +31,7 @@ interface TravelGroupCardProps {
 }
 
 export const TravelGroupCard = ({ group, currentUserId, isMember, onUpdate }: TravelGroupCardProps) => {
+  const [chatOpen, setChatOpen] = useState(false);
   const { toast } = useToast();
 
   const handleJoin = async () => {
@@ -115,16 +118,33 @@ export const TravelGroupCard = ({ group, currentUserId, isMember, onUpdate }: Tr
           </p>
         )}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex gap-2">
+        {isMember && (
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => setChatOpen(true)}
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Chat
+          </Button>
+        )}
         <Button
-          className="w-full"
+          className={isMember ? "flex-1" : "w-full"}
           variant={isMember ? "outline" : "default"}
           onClick={handleJoin}
           disabled={!isMember && group.member_count >= group.max_members}
         >
-          {isMember ? "Leave Group" : group.member_count >= group.max_members ? "Group Full" : "Join Group"}
+          {isMember ? "Leave" : group.member_count >= group.max_members ? "Group Full" : "Join Group"}
         </Button>
       </CardFooter>
+      
+      <GroupChat
+        groupId={group.id}
+        groupTitle={group.title}
+        open={chatOpen}
+        onOpenChange={setChatOpen}
+      />
     </Card>
   );
 };
