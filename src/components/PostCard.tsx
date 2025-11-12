@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow, format } from "date-fns";
 import { CommentsSection } from "./CommentsSection";
+import { ItineraryBookingDialog } from "./ItineraryBookingDialog";
 
 interface PostCardProps {
   post: {
@@ -44,28 +44,8 @@ interface PostCardProps {
 
 export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }: PostCardProps) => {
   const [showComments, setShowComments] = useState(false);
-  const navigate = useNavigate();
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
   const { toast } = useToast();
-
-  const handleBookItinerary = () => {
-    if (!post.itinerary) return;
-    
-    // Navigate to booking page with itinerary details pre-filled
-    navigate("/book-transport", {
-      state: {
-        fromItinerary: true,
-        destination: post.itinerary.destination,
-        startDate: post.itinerary.startDate,
-        endDate: post.itinerary.endDate,
-        transportation: post.itinerary.transportation,
-      },
-    });
-    
-    toast({
-      title: "Redirecting to booking...",
-      description: "Pre-filling details from this itinerary",
-    });
-  };
 
   const handleLike = async () => {
     try {
@@ -254,7 +234,7 @@ export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }
             )}
             
             <Button 
-              onClick={handleBookItinerary}
+              onClick={() => setShowBookingDialog(true)}
               className="w-full gap-2"
             >
               <Plane className="h-4 w-4" />
@@ -263,6 +243,15 @@ export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }
           </div>
         )}
       </CardContent>
+      
+      {post.itinerary && (
+        <ItineraryBookingDialog
+          open={showBookingDialog}
+          onOpenChange={setShowBookingDialog}
+          itinerary={post.itinerary}
+          postAuthor={post.profiles.full_name || "Unknown User"}
+        />
+      )}
       <CardFooter className="flex flex-col gap-3 pt-3 border-t">
         <div className="flex items-center justify-between w-full">
           <Button
