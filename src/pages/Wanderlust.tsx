@@ -67,8 +67,7 @@ const Wanderlust = () => {
   };
 
   const loadPosts = async () => {
-    // @ts-ignore - Types file needs regeneration
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("posts")
       .select(`
         *,
@@ -93,8 +92,7 @@ const Wanderlust = () => {
   };
 
   const loadTravelGroups = async () => {
-    // @ts-ignore - Types file needs regeneration
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("travel_groups")
       .select(`
         *,
@@ -114,8 +112,7 @@ const Wanderlust = () => {
     // Get member counts
     const groupsWithCounts = await Promise.all(
       (data || []).map(async (group: any) => {
-        // @ts-ignore - Types file needs regeneration
-        const { count } = await supabase
+        const { count } = await (supabase as any)
           .from("travel_group_members")
           .select("*", { count: "exact", head: true })
           .eq("group_id", group.id)
@@ -129,19 +126,15 @@ const Wanderlust = () => {
   };
 
   const loadUserInteractions = async (userId: string) => {
-    // @ts-ignore - Types file needs regeneration
     const [likesData, savesData, membershipsData] = await Promise.all([
-      // @ts-ignore
-      supabase.from("post_likes").select("post_id").eq("user_id", userId),
-      // @ts-ignore
-      supabase.from("post_saves").select("post_id").eq("user_id", userId),
-      // @ts-ignore
-      supabase.from("travel_group_members").select("group_id").eq("user_id", userId).eq("status", "accepted"),
+      (supabase as any).from("post_likes").select("post_id").eq("user_id", userId),
+      (supabase as any).from("post_saves").select("post_id").eq("user_id", userId),
+      (supabase as any).from("travel_group_members").select("group_id").eq("user_id", userId).eq("status", "accepted"),
     ]);
 
-    if (likesData.data) setUserLikes(new Set(likesData.data.map(l => l.post_id)));
-    if (savesData.data) setUserSaves(new Set(savesData.data.map(s => s.post_id)));
-    if (membershipsData.data) setUserGroupMemberships(new Set(membershipsData.data.map(m => m.group_id)));
+    if (likesData.data) setUserLikes(new Set(likesData.data.map((l: any) => l.post_id)));
+    if (savesData.data) setUserSaves(new Set(savesData.data.map((s: any) => s.post_id)));
+    if (membershipsData.data) setUserGroupMemberships(new Set(membershipsData.data.map((m: any) => m.group_id)));
   };
 
   const handlePostUpdate = () => {

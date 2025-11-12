@@ -63,8 +63,7 @@ export const CreatePostDialog = ({ onPostCreated }: { onPostCreated: () => void 
         imageUrl = publicUrl;
       }
 
-      // @ts-ignore - Types file needs regeneration
-      const { error } = await supabase.from("posts").insert({
+      const { error } = await (supabase as any).from("posts").insert({
         user_id: user.id,
         content: content.trim(),
         image_url: imageUrl,
