@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import DashboardNav from "@/components/DashboardNav";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import DashboardNav from "@/components/DashboardNav";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, UserPlus, MessageCircle, UserCheck, Lock } from "lucide-react";
+import { Search, UserPlus, MessageCircle, UserCheck, Clock } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -20,117 +20,105 @@ interface Profile {
 }
 
 interface SearchResult extends Profile {
-  connectionStatus: string;
-  canMessage: boolean;
+  connection_status: string;
+  can_message: boolean;
 }
 
 const SearchUsers = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState("");
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     checkAuth();
   }, []);
 
-  useEffect(() => {
-    if (searchQuery) {
-      performSearch();
-    }
-  }, [searchQuery, currentUserId]);
-
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       navigate("/login");
       return;
     }
-
-    setCurrentUserId(session.user.id);
+    setCurrentUserId(user.id);
   };
 
   const performSearch = async () => {
-    if (!currentUserId || !searchQuery) return;
+    if (!searchQuery.trim() || !currentUserId) return;
 
     setLoading(true);
-
     try {
-      // Security: Use public_profiles view to avoid exposing email/phone
       const { data: profiles, error } = await supabase
-        .from("public_profiles")
+        .from("profiles")
         .select("*")
-        .neq("id", currentUserId)
         .or(`full_name.ilike.%${searchQuery}%,interests.cs.{${searchQuery}}`)
+        .neq("id", currentUserId)
         .limit(20);
 
       if (error) throw error;
 
-      // Get connection statuses for all results
-      const resultsWithStatus = await Promise.all(
+      const profilesWithStatus = await Promise.all(
         (profiles || []).map(async (profile) => {
-          const { data: statusData } = await supabase.rpc('get_connection_status', {
-            user1_id: currentUserId,
-            user2_id: profile.id
-          });
+          const { data: statusData } = await supabase
+            .rpc("get_connection_status", {
+              user1_id: currentUserId,
+              user2_id: profile.id,
+            });
 
-          const connectionStatus = statusData || 'none';
-          const canMessage = connectionStatus === 'connected';
+          const canMessage = statusData === "connected" || profile.is_public;
 
           return {
             ...profile,
-            connectionStatus,
-            canMessage
+            connection_status: statusData || "none",
+            can_message: canMessage,
           };
         })
       );
 
-      setResults(resultsWithStatus);
-    } catch (error) {
-      // Security: Don't log detailed errors
+      setResults(profilesWithStatus);
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to search users",
-        variant: "destructive"
+        description: error.message,
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const sendConnectionRequest = async (userId: string) => {
-    const { error } = await supabase
-      .from("user_connections")
-      .insert({
+  const sendConnectionRequest = async (targetUserId: string) => {
+    if (!currentUserId) return;
+
+    try {
+      const { error } = await supabase.from("user_connections").insert({
         requester_id: currentUserId,
-        addressee_id: userId,
-        status: "pending"
+        addressee_id: targetUserId,
+        status: "pending",
       });
 
-    if (error) {
+      if (error) throw error;
+
+      toast({
+        title: "Request Sent",
+        description: "Connection request sent successfully",
+      });
+
+      performSearch();
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to send connection request",
-        variant: "destructive"
+        description: error.message,
+        variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: "Request Sent",
-      description: "Connection request sent successfully"
-    });
-
-    performSearch(); // Refresh results
   };
 
   const getInitials = (name: string | null) => {
     if (!name) return "U";
-    return name.split(" ").map(n => n[0]).join("").toUpperCase();
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -138,144 +126,136 @@ const SearchUsers = () => {
     performSearch();
   };
 
+  const renderConnectionButton = (result: SearchResult) => {
+    switch (result.connection_status) {
+      case "connected":
+        return (
+          <Button variant="outline" disabled>
+            <UserCheck className="h-4 w-4 mr-2" />
+            Connected
+          </Button>
+        );
+      case "pending_sent":
+        return (
+          <Button variant="outline" disabled>
+            <Clock className="h-4 w-4 mr-2" />
+            Request Sent
+          </Button>
+        );
+      case "pending_received":
+        return (
+          <Button variant="outline" disabled>
+            <Clock className="h-4 w-4 mr-2" />
+            Request Received
+          </Button>
+        );
+      default:
+        return (
+          <Button onClick={() => sendConnectionRequest(result.id)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Connect
+          </Button>
+        );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <DashboardNav />
-
-      <main className="container px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-4">Search Travelers</h1>
-          
-          <form onSubmit={handleSearch} className="relative">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search by name or interests..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </form>
+          <h1 className="text-4xl font-bold mb-2">Search Users</h1>
+          <p className="text-muted-foreground">Find and connect with travelers</p>
         </div>
 
-        {loading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Searching...</p>
-          </div>
-        ) : results.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Search className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground text-center">
-                {searchQuery ? "No users found" : "Start searching to find travelers"}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {results.map((profile) => (
-              <Card key={profile.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="flex items-center justify-between p-6">
-                  <div className="flex items-center gap-4 flex-1">
-                    <Avatar 
-                      className="h-16 w-16 cursor-pointer" 
-                      onClick={() => navigate(`/profile/${profile.id}`)}
-                    >
-                      <AvatarImage src={profile.avatar_url || undefined} />
-                      <AvatarFallback>{getInitials(profile.full_name)}</AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 
-                          className="font-semibold text-lg cursor-pointer hover:underline"
-                          onClick={() => navigate(`/profile/${profile.id}`)}
-                        >
-                          {profile.full_name || "User"}
-                        </h3>
-                        {!profile.is_public && (
-                          <Lock className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        {profile.connectionStatus === 'connected' && (
-                          <Badge variant="secondary">
-                            <UserCheck className="h-3 w-3 mr-1" />
-                            Connected
-                          </Badge>
-                        )}
-                        {profile.connectionStatus === 'pending_sent' && (
-                          <Badge variant="outline">Request Sent</Badge>
-                        )}
-                        {profile.connectionStatus === 'pending_received' && (
-                          <Badge>Pending</Badge>
-                        )}
-                      </div>
-                      
-                      {profile.connectionStatus === 'connected' ? (
-                        <>
-                          {profile.bio && (
-                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                              {profile.bio}
-                            </p>
-                          )}
-                          {profile.interests && profile.interests.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {profile.interests.slice(0, 3).map((interest) => (
-                                <Badge key={interest} variant="outline" className="text-xs">
-                                  {interest}
-                                </Badge>
-                              ))}
-                              {profile.interests.length > 3 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{profile.interests.length - 3} more
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Connect to view interests and bio
-                        </p>
-                      )}
-                    </div>
-                  </div>
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <Input
+                placeholder="Search by name or interests..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1"
+              />
+              <Button type="submit" disabled={loading}>
+                <Search className="h-4 w-4 mr-2" />
+                {loading ? "Searching..." : "Search"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
-                  <div className="flex gap-2 ml-4">
-                    {profile.canMessage && (
-                      <Button
-                        variant="outline"
-                        onClick={() => navigate('/wanderlust', { state: { selectedUserId: profile.id } })}
-                      >
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Message
-                      </Button>
-                    )}
-                    
-                    {profile.connectionStatus === 'none' && (
-                      <Button onClick={() => sendConnectionRequest(profile.id)}>
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Connect
-                      </Button>
-                    )}
-                    
-                    {profile.connectionStatus === 'pending_received' && (
-                      <Button onClick={() => navigate('/connections')}>
-                        View Request
-                      </Button>
-                    )}
-
-                    {profile.connectionStatus !== 'none' && profile.connectionStatus !== 'pending_received' && !profile.canMessage && (
-                      <Button variant="outline" onClick={() => navigate(`/profile/${profile.id}`)}>
-                        View Profile
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+        {results.length === 0 && !loading && searchQuery && (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No users found matching "{searchQuery}"</p>
           </div>
         )}
-      </main>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {results.map((result) => (
+            <Card key={result.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12 cursor-pointer" onClick={() => navigate(`/profile/${result.id}`)}>
+                    <AvatarImage src={result.avatar_url || undefined} />
+                    <AvatarFallback>{getInitials(result.full_name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle 
+                      className="text-base cursor-pointer hover:underline"
+                      onClick={() => navigate(`/profile/${result.id}`)}
+                    >
+                      {result.full_name || "Anonymous"}
+                    </CardTitle>
+                    {result.connection_status === "connected" && (
+                      <Badge variant="secondary" className="mt-1">Connected</Badge>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {result.connection_status === "connected" && (
+                  <>
+                    {result.bio && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {result.bio}
+                      </p>
+                    )}
+                    {result.interests && result.interests.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {result.interests.slice(0, 3).map((interest, idx) => (
+                          <Badge key={idx} variant="outline" className="text-xs">
+                            {interest}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+                {result.connection_status !== "connected" && (
+                  <p className="text-sm text-muted-foreground">
+                    Connect to see full profile
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  {result.can_message && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => navigate(`/messages?user=${result.id}`)}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-1" />
+                      Message
+                    </Button>
+                  )}
+                  {renderConnectionButton(result)}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

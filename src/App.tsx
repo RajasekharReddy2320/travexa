@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import PlanTrip from "./pages/PlanTrip";
 import Book from "./pages/Book";
 import Profile from "./pages/Profile";
+import UserProfile from "./pages/UserProfile";
 import CreateTrip from "./pages/CreateTrip";
 import Connections from "./pages/Connections";
 import SearchUsers from "./pages/SearchUsers";
@@ -45,19 +46,18 @@ const App = () => (
             <Route path="/plan-trip" element={<Dashboard />} />
             <Route path="/ai-planner" element={<PlanTrip />} />
             <Route path="/create-trip" element={<CreateTrip />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:userId" element={<UserProfile />} />
             <Route path="/connections" element={<Connections />} />
             <Route path="/search" element={<SearchUsers />} />
             <Route path="/book-transport" element={<BookTransport />} />
-            <Route path="/book-confirm" element={<BookConfirm />} />
-            <Route path="/my-tickets" element={<MyTickets />} />
             <Route path="/ticket-details" element={<TicketDetails />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/travel-buddies" element={<TravelBuddies />} />
             <Route path="/photo-vault" element={<PhotoVault />} />
             <Route path="/knowledge" element={<Knowledge />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/:userId" element={<Profile />} />
+            <Route path="/profile/:userId" element={<UserProfile />} />
             <Route path="/book" element={<Book />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
