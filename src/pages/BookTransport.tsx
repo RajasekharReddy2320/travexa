@@ -53,14 +53,12 @@ export default function BookTransport() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [date, setDate] = useState("");
-  const [checkoutDate, setCheckoutDate] = useState("");
   const [passengers, setPassengers] = useState("1");
   
   // Results state
   const [flights, setFlights] = useState<any[]>([]);
   const [trains, setTrains] = useState<any[]>([]);
   const [buses, setBuses] = useState<any[]>([]);
-  const [hotels, setHotels] = useState<any[]>([]);
 
   const handleSearch = async () => {
     // Security: Validate search parameters
@@ -95,73 +93,6 @@ export default function BookTransport() {
       } else if (activeTab === 'buses') {
         functionName = 'search-buses';
         setResults = setBuses;
-      } else if (activeTab === 'hotels') {
-        // Calculate number of nights
-        let nights = 1;
-        if (validatedData.date && checkoutDate) {
-          const checkin = new Date(validatedData.date);
-          const checkout = new Date(checkoutDate);
-          nights = Math.max(1, Math.ceil((checkout.getTime() - checkin.getTime()) / (1000 * 60 * 60 * 24)));
-        }
-
-        // Generate mock hotel data
-        const mockHotels = [
-          {
-            id: '1',
-            name: 'Luxury Grand Hotel',
-            rating: 5,
-            pricePerNight: 5500,
-            price: 5500 * nights,
-            nights: nights,
-            amenities: ['WiFi', 'Pool', 'Spa', 'Restaurant', 'Gym'],
-            location: validatedData.to,
-            images: [],
-            reviews: 450
-          },
-          {
-            id: '2',
-            name: 'Comfort Inn & Suites',
-            rating: 4,
-            pricePerNight: 3200,
-            price: 3200 * nights,
-            nights: nights,
-            amenities: ['WiFi', 'Breakfast', 'Gym', 'Parking'],
-            location: validatedData.to,
-            images: [],
-            reviews: 280
-          },
-          {
-            id: '3',
-            name: 'Budget Stay Hotel',
-            rating: 3,
-            pricePerNight: 1800,
-            price: 1800 * nights,
-            nights: nights,
-            amenities: ['WiFi', 'AC', 'TV'],
-            location: validatedData.to,
-            images: [],
-            reviews: 150
-          },
-          {
-            id: '4',
-            name: 'Business Executive Hotel',
-            rating: 4,
-            pricePerNight: 4200,
-            price: 4200 * nights,
-            nights: nights,
-            amenities: ['WiFi', 'Conference Room', 'Restaurant', 'Laundry'],
-            location: validatedData.to,
-            images: [],
-            reviews: 320
-          }
-        ];
-        setHotels(mockHotels);
-        toast({
-          title: "Search Complete",
-          description: `Found ${mockHotels.length} hotels for ${nights} night(s)`,
-        });
-        setLoading(false);
-        return;
       }
 
       // Use validated data
@@ -217,16 +148,7 @@ export default function BookTransport() {
     navigate('/book-confirm', { 
       state: { 
         bookingType: 'bus',
-        booking: bus 
-      } 
-    });
-  };
-
-  const handleBookHotel = (hotel: any) => {
-    navigate('/book-confirm', { 
-      state: { 
-        bookingType: 'hotel',
-        booking: hotel 
+        booking: bus
       } 
     });
   };
@@ -255,21 +177,21 @@ export default function BookTransport() {
               <Bus className="h-4 w-4" />
               Buses
             </TabsTrigger>
-            <TabsTrigger value="hotels" className="flex items-center gap-2">
-              <Hotel className="h-4 w-4" />
-              Hotels
+            <TabsTrigger value="my-tickets" className="flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              My Tickets
             </TabsTrigger>
           </TabsList>
 
           {/* Search Form */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Search {activeTab === 'flights' ? 'Flights' : activeTab === 'trains' ? 'Trains' : activeTab === 'buses' ? 'Buses' : 'Hotels'}</CardTitle>
-              <CardDescription>Enter your {activeTab === 'hotels' ? 'stay' : 'travel'} details</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {activeTab !== 'hotels' && (
+          {activeTab !== 'my-tickets' && (
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Search {activeTab === 'flights' ? 'Flights' : activeTab === 'trains' ? 'Trains' : 'Buses'}</CardTitle>
+                <CardDescription>Enter your travel details</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <Label htmlFor="from">From</Label>
                     <Input
@@ -279,58 +201,46 @@ export default function BookTransport() {
                       onChange={(e) => setFrom(e.target.value)}
                     />
                   </div>
-                )}
-                <div>
-                  <Label htmlFor="to">{activeTab === 'hotels' ? 'Destination' : 'To'}</Label>
-                  <Input
-                    id="to"
-                    placeholder="e.g., Mumbai"
-                    value={to}
-                    onChange={(e) => setTo(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="date">{activeTab === 'hotels' ? 'Check-in Date' : 'Date'}</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </div>
-                {activeTab === 'hotels' && (
                   <div>
-                    <Label htmlFor="checkoutDate">Check-out Date</Label>
+                    <Label htmlFor="to">To</Label>
                     <Input
-                      id="checkoutDate"
+                      id="to"
+                      placeholder="e.g., Mumbai"
+                      value={to}
+                      onChange={(e) => setTo(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="date">Date</Label>
+                    <Input
+                      id="date"
                       type="date"
-                      value={checkoutDate}
-                      onChange={(e) => setCheckoutDate(e.target.value)}
-                      min={date || undefined}
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
                     />
                   </div>
-                )}
-                {activeTab === 'flights' && (
-                  <div>
-                    <Label htmlFor="passengers">Passengers</Label>
-                    <Input
-                      id="passengers"
-                      type="number"
-                      min="1"
-                      value={passengers}
-                      onChange={(e) => setPassengers(e.target.value)}
-                    />
+                  {activeTab === 'flights' && (
+                    <div>
+                      <Label htmlFor="passengers">Passengers</Label>
+                      <Input
+                        id="passengers"
+                        type="number"
+                        min="1"
+                        value={passengers}
+                        onChange={(e) => setPassengers(e.target.value)}
+                      />
+                    </div>
+                  )}
+                  <div className="flex items-end">
+                    <Button onClick={handleSearch} disabled={loading} className="w-full">
+                      <Search className="mr-2 h-4 w-4" />
+                      {loading ? 'Searching...' : 'Search'}
+                    </Button>
                   </div>
-                )}
-                <div className="flex items-end">
-                  <Button onClick={handleSearch} disabled={loading} className="w-full">
-                    <Search className="mr-2 h-4 w-4" />
-                    {loading ? 'Searching...' : 'Search'}
-                  </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Results */}
           <TabsContent value="flights">
@@ -500,57 +410,21 @@ export default function BookTransport() {
             </div>
           </TabsContent>
 
-          <TabsContent value="hotels">
-            <div className="space-y-4">
-              {hotels.length === 0 ? (
-                <Card>
-                  <CardContent className="p-8 text-center text-muted-foreground">
-                    Search for hotels to see available options
-                  </CardContent>
-                </Card>
-              ) : (
-                hotels.map((hotel) => (
-                  <Card key={hotel.id}>
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-4 mb-2">
-                            <h3 className="font-semibold text-lg">{hotel.name}</h3>
-                            <div className="flex">
-                              {[...Array(hotel.rating)].map((_, i) => (
-                                <span key={i} className="text-yellow-500">★</span>
-                              ))}
-                            </div>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-3">{hotel.location}</p>
-                          <div className="flex gap-2 flex-wrap mb-3">
-                            {hotel.amenities.map((amenity: string) => (
-                              <span key={amenity} className="text-xs bg-secondary px-2 py-1 rounded">
-                                {amenity}
-                              </span>
-                            ))}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Based on {hotel.reviews} reviews
-                          </p>
-                        </div>
-                        <div className="text-right ml-8">
-                          <div className="flex items-baseline gap-2 justify-end">
-                            <span className="text-3xl font-bold text-primary">₹{hotel.price.toLocaleString()}</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-4">
-                            ₹{hotel.pricePerNight?.toLocaleString() || hotel.price.toLocaleString()} × {hotel.nights || 1} night{(hotel.nights || 1) > 1 ? 's' : ''}
-                          </p>
-                          <Button onClick={() => handleBookHotel(hotel)}>
-                            Book Now
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
+          <TabsContent value="my-tickets">
+            <Card>
+              <CardContent className="p-8">
+                <div className="text-center py-12">
+                  <Search className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">Your Booked Tickets</h3>
+                  <p className="text-muted-foreground mb-4">
+                    View all your booked flights, trains, and bus tickets here
+                  </p>
+                  <Button onClick={() => navigate("/my-tickets")}>
+                    View All Tickets
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
