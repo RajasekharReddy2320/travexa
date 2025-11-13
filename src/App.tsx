@@ -22,6 +22,9 @@ import MyTickets from "./pages/MyTickets";
 import TicketDetails from "./pages/TicketDetails";
 import Cart from "./pages/Cart";
 import Messages from "./pages/Messages";
+import TravelBuddies from "./pages/TravelBuddies";
+import PhotoVault from "./pages/PhotoVault";
+import Knowledge from "./pages/Knowledge";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +53,9 @@ const App = () => (
             <Route path="/ticket-details" element={<TicketDetails />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/travel-buddies" element={<TravelBuddies />} />
+            <Route path="/photo-vault" element={<PhotoVault />} />
+            <Route path="/knowledge" element={<Knowledge />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/book" element={<Book />} />

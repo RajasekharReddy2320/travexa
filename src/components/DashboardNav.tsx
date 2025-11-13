@@ -63,47 +63,63 @@ const DashboardNav = () => {
             </Link>
 
             <Link
-              to="/connections"
+              to="/travel-buddies"
               className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
-                isActive("/connections")
+                isActive("/travel-buddies")
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
               }`}
             >
               <UserCheck className="h-4 w-4" />
-              <span className="hidden lg:inline-block">Connections</span>
+              <span className="hidden lg:inline-block">Travel Buddies</span>
             </Link>
 
             <Link
-              to="/messages"
+              to="/plan-trip"
               className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
-                isActive("/messages")
+                isActive("/plan-trip")
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
               }`}
             >
-              <MessageSquare className="h-4 w-4" />
-              <span className="hidden lg:inline-block">Messages</span>
+              <Plane className="h-4 w-4" />
+              <span className="hidden lg:inline-block">Trip Planner</span>
             </Link>
 
             <Link
               to="/book-transport"
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/90`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+                isActive("/book-transport") || isActive("/my-tickets")
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent/50"
+              }`}
             >
               <Ticket className="h-4 w-4" />
               <span className="hidden lg:inline-block">Book Tickets</span>
             </Link>
 
             <Link
-              to="/my-tickets"
+              to="/photo-vault"
               className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
-                isActive("/my-tickets")
+                isActive("/photo-vault")
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
               }`}
             >
-              <Ticket className="h-4 w-4" />
-              <span className="hidden lg:inline-block">My Tickets</span>
+              <Search className="h-4 w-4" />
+              <span className="hidden lg:inline-block">Photo Vault</span>
+            </Link>
+
+            <Link
+              to="/knowledge"
+              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+                isActive("/knowledge")
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent/50"
+              }`}
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden lg:inline-block">Knowledge</span>
             </Link>
 
             <Link
@@ -129,18 +145,6 @@ const DashboardNav = () => {
             >
               <User className="h-4 w-4" />
               <span className="hidden lg:inline-block">Profile</span>
-            </Link>
-
-            <Link
-              to="/plan-trip"
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
-                isActive("/plan-trip")
-                  ? "bg-accent text-accent-foreground"
-                  : "hover:bg-accent/50"
-              }`}
-            >
-              <Plane className="h-4 w-4" />
-              <span className="hidden lg:inline-block">AI Trip Planner</span>
             </Link>
           </div>
         )}

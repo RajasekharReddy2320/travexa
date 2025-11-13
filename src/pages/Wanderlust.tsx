@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import DashboardNav from "@/components/DashboardNav";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { PostCard } from "@/components/PostCard";
@@ -201,9 +202,11 @@ const Wanderlust = () => {
         </div>
 
         <Tabs defaultValue="feed" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
             <TabsTrigger value="feed">Feed</TabsTrigger>
             <TabsTrigger value="groups">Travel Groups</TabsTrigger>
+            <TabsTrigger value="connections">Connections</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="saved">Saved</TabsTrigger>
           </TabsList>
 
@@ -244,6 +247,24 @@ const Wanderlust = () => {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="connections" className="space-y-6">
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">View your connections in the Connections section</p>
+              <Button className="mt-4" onClick={() => navigate("/connections")}>
+                Go to Connections
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="messages" className="space-y-6">
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">View your messages in the Messages section</p>
+              <Button className="mt-4" onClick={() => navigate("/messages")}>
+                Go to Messages
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="saved" className="space-y-6">
