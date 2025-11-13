@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow, format } from "date-fns";
 import { CommentsSection } from "./CommentsSection";
 import { ItineraryBookingDialog } from "./ItineraryBookingDialog";
+import { ConnectButton } from "./ConnectButton";
 
 interface PostCardProps {
   post: {
@@ -130,16 +131,19 @@ export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center gap-3 pb-3">
-        <Avatar>
+        <Avatar className="cursor-pointer" onClick={() => window.location.href = `/profile/${post.user_id}`}>
           <AvatarImage src={post.profiles.avatar_url || undefined} />
           <AvatarFallback>{getInitials(post.profiles.full_name)}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <p className="font-semibold">{post.profiles.full_name || "Unknown User"}</p>
+          <p className="font-semibold cursor-pointer hover:underline" onClick={() => window.location.href = `/profile/${post.user_id}`}>
+            {post.profiles.full_name || "Unknown User"}
+          </p>
           <p className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
           </p>
         </div>
+        {!isOwner && <ConnectButton userId={post.user_id} currentUserId={currentUserId} />}
         {isOwner && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
