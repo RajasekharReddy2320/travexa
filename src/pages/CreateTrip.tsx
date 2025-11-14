@@ -157,20 +157,13 @@ const CreateTrip = () => {
                   <Label htmlFor="budget_range">Budget Range</Label>
                   <div className="flex items-center gap-2">
                     <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                    <select
+                    <Input
                       id="budget_range"
+                      placeholder="e.g., ₹50,000 - ₹1,00,000"
                       value={tripData.budget_range}
                       onChange={(e) => setTripData({ ...tripData, budget_range: e.target.value })}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="">Select budget range</option>
-                      <option value="Under ₹10,000">Under ₹10,000</option>
-                      <option value="₹10,000 - ₹25,000">₹10,000 - ₹25,000</option>
-                      <option value="₹25,000 - ₹50,000">₹25,000 - ₹50,000</option>
-                      <option value="₹50,000 - ₹1,00,000">₹50,000 - ₹1,00,000</option>
-                      <option value="Above ₹1,00,000">Above ₹1,00,000</option>
-                      <option value="Flexible">Flexible</option>
-                    </select>
+                      className="flex-1"
+                    />
                   </div>
                 </div>
 
