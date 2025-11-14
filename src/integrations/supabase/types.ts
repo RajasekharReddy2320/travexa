@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      articles: {
+        Row: {
+          content: string
+          cover_image: string | null
+          created_at: string
+          id: string
+          is_published: boolean | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          cover_image?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          cover_image?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           arrival_date: string | null
@@ -208,6 +244,68 @@ export type Database = {
           sender_id?: string
         }
         Relationships: []
+      }
+      photo_albums: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      photos: {
+        Row: {
+          album_id: string | null
+          caption: string | null
+          created_at: string
+          file_path: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          album_id?: string | null
+          caption?: string | null
+          created_at?: string
+          file_path: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          album_id?: string | null
+          caption?: string | null
+          created_at?: string
+          file_path?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photos_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "photo_albums"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_comments: {
         Row: {
