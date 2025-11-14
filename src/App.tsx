@@ -27,6 +27,8 @@ import TravelBuddies from "./pages/TravelBuddies";
 import PhotoVault from "./pages/PhotoVault";
 import Knowledge from "./pages/Knowledge";
 import NotFound from "./pages/NotFound";
+import TravelAgents from "./pages/TravelAgents";
+import LocalGuides from "./pages/LocalGuides";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +61,8 @@ const App = () => (
             <Route path="/knowledge" element={<Knowledge />} />
             <Route path="/profile/:userId" element={<UserProfile />} />
             <Route path="/book" element={<Book />} />
+            <Route path="/travel-agents" element={<TravelAgents />} />
+            <Route path="/local-guides" element={<LocalGuides />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
