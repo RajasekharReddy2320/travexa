@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Calendar, IndianRupee, Users, Save } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Users, Save, UserCog } from "lucide-react";
 import DashboardNav from "@/components/DashboardNav";
 
 const CreateTrip = () => {
@@ -212,6 +212,42 @@ const CreateTrip = () => {
             </CardContent>
           </Card>
         </form>
+
+        <div className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCog className="h-5 w-5" />
+                Need Professional Help?
+              </CardTitle>
+              <CardDescription>
+                Connect with travel experts to plan your perfect trip
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => navigate("/travel-agents")}
+                className="w-full"
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Connect with Travel Agents
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => navigate("/local-guides")}
+                className="w-full"
+              >
+                <MapPin className="mr-2 h-4 w-4" />
+                Connect with Local Guides
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   );
