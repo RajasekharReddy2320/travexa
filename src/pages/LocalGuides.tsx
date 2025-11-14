@@ -15,13 +15,14 @@ interface LocalGuide {
   rating: number;
   reviews: number;
   languages: string[];
-  location: string;
+  place: string;
   expertise: string[];
   hourlyRate: number;
   dayRate: number;
   experience: string;
   description: string;
   availability: string;
+  topAttractions: string[];
 }
 
 const localGuides: LocalGuide[] = [
@@ -32,13 +33,14 @@ const localGuides: LocalGuide[] = [
     rating: 4.9,
     reviews: 187,
     languages: ["Hindi", "English", "Punjabi"],
-    location: "Jaipur, Rajasthan",
+    place: "Jaipur",
     expertise: ["Heritage Tours", "Photography Spots", "Local Cuisine"],
     hourlyRate: 500,
     dayRate: 3500,
     experience: "12 years",
     availability: "Available",
-    description: "Born and raised in Jaipur, I'll show you the hidden gems of the Pink City."
+    description: "Born and raised in Jaipur, I'll show you the hidden gems of the Pink City.",
+    topAttractions: ["Hawa Mahal", "Amber Fort", "City Palace"]
   },
   {
     id: "2",
@@ -47,13 +49,14 @@ const localGuides: LocalGuide[] = [
     rating: 4.8,
     reviews: 142,
     languages: ["Malayalam", "Tamil", "English"],
-    location: "Kochi, Kerala",
+    place: "Kochi",
     expertise: ["Backwater Tours", "Ayurveda", "Spice Gardens"],
     hourlyRate: 600,
     dayRate: 4000,
     experience: "8 years",
     availability: "Available",
-    description: "Discover Kerala's natural beauty and traditional wellness practices with me."
+    description: "Discover Kerala's natural beauty and traditional wellness practices.",
+    topAttractions: ["Fort Kochi", "Marine Drive", "Jew Town"]
   },
   {
     id: "3",
@@ -62,13 +65,14 @@ const localGuides: LocalGuide[] = [
     rating: 4.7,
     reviews: 165,
     languages: ["Telugu", "Hindi", "English"],
-    location: "Hyderabad, Telangana",
+    place: "Hyderabad",
     expertise: ["Historical Sites", "Biryani Tours", "Shopping"],
     hourlyRate: 550,
     dayRate: 3800,
     experience: "10 years",
     availability: "Busy",
-    description: "Let me take you through Hyderabad's rich history and culinary delights."
+    description: "Let me take you through Hyderabad's rich history and culinary delights.",
+    topAttractions: ["Charminar", "Golconda Fort", "Hussain Sagar"]
   },
   {
     id: "4",
@@ -77,13 +81,14 @@ const localGuides: LocalGuide[] = [
     rating: 4.9,
     reviews: 203,
     languages: ["Gujarati", "Hindi", "English"],
-    location: "Ahmedabad, Gujarat",
+    place: "Ahmedabad",
     expertise: ["Textile Tours", "Street Food", "Temples"],
     hourlyRate: 650,
     dayRate: 4200,
     experience: "15 years",
     availability: "Available",
-    description: "Explore Gujarat's vibrant culture, textiles, and mouth-watering street food."
+    description: "Explore Gujarat's vibrant culture, textiles, and mouth-watering street food.",
+    topAttractions: ["Sabarmati Ashram", "Adalaj Stepwell", "Manek Chowk"]
   },
   {
     id: "5",
@@ -92,13 +97,14 @@ const localGuides: LocalGuide[] = [
     rating: 4.8,
     reviews: 178,
     languages: ["Hindi", "English", "Marathi"],
-    location: "Mumbai, Maharashtra",
+    place: "Mumbai",
     expertise: ["Bollywood", "Street Art", "Nightlife"],
     hourlyRate: 700,
     dayRate: 4500,
     experience: "9 years",
     availability: "Available",
-    description: "Experience the energy of Mumbai through Bollywood, art, and local hotspots."
+    description: "Experience the energy of Mumbai through Bollywood, art, and local hotspots.",
+    topAttractions: ["Gateway of India", "Marine Drive", "Colaba Causeway"]
   },
   {
     id: "6",
@@ -107,43 +113,30 @@ const localGuides: LocalGuide[] = [
     rating: 4.6,
     reviews: 134,
     languages: ["Hindi", "English", "Bhojpuri"],
-    location: "Varanasi, UP",
+    place: "Varanasi",
     expertise: ["Spiritual Tours", "Ghats", "Ancient Rituals"],
     hourlyRate: 500,
     dayRate: 3200,
     experience: "20 years",
     availability: "Available",
-    description: "Walk through centuries of spirituality in one of the world's oldest cities."
+    description: "Walk through centuries of spirituality in one of the world's oldest cities.",
+    topAttractions: ["Dashashwamedh Ghat", "Kashi Vishwanath", "Assi Ghat"]
   },
   {
     id: "7",
-    name: "Nisha Chatterjee",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Nisha",
+    name: "Priya Singh",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PriyaGuide",
     rating: 4.9,
-    reviews: 221,
-    languages: ["Bengali", "Hindi", "English"],
-    location: "Kolkata, West Bengal",
-    expertise: ["Colonial History", "Art & Literature", "Cuisine"],
-    hourlyRate: 600,
-    dayRate: 4000,
-    experience: "11 years",
-    availability: "Available",
-    description: "Dive into Kolkata's rich cultural heritage, art scene, and culinary traditions."
-  },
-  {
-    id: "8",
-    name: "Deepak Singh",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Deepak",
-    rating: 4.7,
-    reviews: 156,
-    languages: ["Hindi", "English", "Kumaoni"],
-    location: "Nainital, Uttarakhand",
-    expertise: ["Mountain Treks", "Lake Tours", "Wildlife"],
-    hourlyRate: 550,
-    dayRate: 3600,
+    reviews: 289,
+    languages: ["Hindi", "English", "Urdu"],
+    place: "Agra",
+    expertise: ["Mughal History", "Monument Photography", "Marble Craft"],
+    hourlyRate: 800,
+    dayRate: 5000,
     experience: "14 years",
     availability: "Available",
-    description: "Mountain expert guiding you through Himalayan beauty and serene lakes."
+    description: "Experience the Taj Mahal and Agra's wonders with an expert historian guide.",
+    topAttractions: ["Taj Mahal", "Agra Fort", "Fatehpur Sikri"]
   }
 ];
 
@@ -216,7 +209,7 @@ export default function LocalGuides() {
                 
                 <div className="flex items-center gap-2 text-xs">
                   <MapPin className="h-3 w-3 text-muted-foreground" />
-                  <span>{guide.location}</span>
+                  <span>Local guide in {guide.place}</span>
                 </div>
 
                 <div className="flex items-center gap-2 text-xs">
@@ -231,10 +224,22 @@ export default function LocalGuides() {
                   </Badge>
                 </div>
 
-                <div className="flex flex-wrap gap-1">
-                  {guide.expertise.slice(0, 2).map((exp) => (
-                    <Badge key={exp} variant="outline" className="text-xs">{exp}</Badge>
-                  ))}
+                <div>
+                  <p className="text-xs font-semibold mb-1">Specialties</p>
+                  <div className="flex flex-wrap gap-1">
+                    {guide.expertise.slice(0, 2).map((exp) => (
+                      <Badge key={exp} variant="secondary" className="text-xs">{exp}</Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold mb-1">Top Attractions</p>
+                  <div className="flex flex-wrap gap-1">
+                    {guide.topAttractions.map((attr) => (
+                      <Badge key={attr} variant="outline" className="text-xs">{attr}</Badge>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="pt-2 border-t">

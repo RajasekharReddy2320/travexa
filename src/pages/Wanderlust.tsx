@@ -125,8 +125,9 @@ const Wanderlust = () => {
         </div>
 
         <Tabs defaultValue="feed" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
             <TabsTrigger value="feed">Feed</TabsTrigger>
+            <TabsTrigger value="travel-tinder">Travel Tinder</TabsTrigger>
             <TabsTrigger value="connections">Connections</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="saved">Saved</TabsTrigger>
@@ -149,6 +150,18 @@ const Wanderlust = () => {
                 />
               ))
             )}
+          </TabsContent>
+
+          <TabsContent value="travel-tinder" className="space-y-6">
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-semibold mb-4">Travel Tinder</h2>
+              <p className="text-muted-foreground mb-6">
+                Find your perfect travel buddy based on shared interests
+              </p>
+              <Button onClick={() => navigate("/travel-tinder")}>
+                Start Matching
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="connections" className="space-y-6">
