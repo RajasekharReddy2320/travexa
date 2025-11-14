@@ -163,12 +163,25 @@ const CreateTrip = () => {
                 />
               </div>
 
-              <div className="flex gap-4">
-              <Button type="submit" className="flex-1">
-                <UserCog className="mr-2 h-4 w-4" />
-                Find Travel Agents
-              </Button>
-                <Button type="button" variant="outline" onClick={() => navigate("/plan-trip")}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Button type="submit" className="w-full">
+                    <UserCog className="mr-2 h-4 w-4" />
+                    Find Travel Agents
+                  </Button>
+                  <Button 
+                    type="button" 
+                    onClick={() => {
+                      localStorage.setItem('tripPreferences', JSON.stringify(tripData));
+                      navigate("/local-guides");
+                    }}
+                    className="w-full"
+                  >
+                    <MapPin className="mr-2 h-4 w-4" />
+                    Find Local Guides
+                  </Button>
+                </div>
+                <Button type="button" variant="outline" onClick={() => navigate("/plan-trip")} className="w-full">
                   Cancel
                 </Button>
               </div>
@@ -176,41 +189,6 @@ const CreateTrip = () => {
           </Card>
         </form>
 
-        <div className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserCog className="h-5 w-5" />
-                Need Professional Help?
-              </CardTitle>
-              <CardDescription>
-                Connect with travel experts to plan your perfect trip
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                onClick={() => navigate("/travel-agents")}
-                className="w-full"
-              >
-                <Users className="mr-2 h-4 w-4" />
-                Connect with Travel Agents
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                onClick={() => navigate("/local-guides")}
-                className="w-full"
-              >
-                <MapPin className="mr-2 h-4 w-4" />
-                Connect with Local Guides
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
       </main>
     </div>
   );
