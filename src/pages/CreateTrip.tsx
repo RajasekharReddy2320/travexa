@@ -185,10 +185,10 @@ const CreateTrip = () => {
               </div>
 
               <div>
-                <Label htmlFor="notes">Notes & Activities</Label>
+                <Label htmlFor="notes">Preferences</Label>
                 <Textarea
                   id="notes"
-                  placeholder="Add any notes, activities, or plans..."
+                  placeholder="Add your travel preferences..."
                   value={tripData.notes}
                   onChange={(e) => setTripData({ ...tripData, notes: e.target.value })}
                   rows={6}
