@@ -135,7 +135,7 @@ const TravelBuddies = () => {
         </div>
 
         <Tabs defaultValue="find" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="find">
               <Search className="h-4 w-4 mr-2" />
               Find Buddies
@@ -147,6 +147,10 @@ const TravelBuddies = () => {
             <TabsTrigger value="travel-with-me">
               <Users className="h-4 w-4 mr-2" />
               Travel With Me
+            </TabsTrigger>
+            <TabsTrigger value="travel-groups">
+              <Users className="h-4 w-4 mr-2" />
+              Travel Groups
             </TabsTrigger>
           </TabsList>
 
@@ -305,6 +309,21 @@ const TravelBuddies = () => {
                   <Users className="h-16 w-16 mx-auto mb-4 opacity-50" />
                   <p>Share your travel plans and invite others to join you</p>
                   <Button className="mt-4">Create Travel Plan</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="travel-groups" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Travel Groups</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12 text-muted-foreground">
+                  <Users className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <p>Browse and join travel groups with similar interests</p>
+                  <Button className="mt-4">Explore Groups</Button>
                 </div>
               </CardContent>
             </Card>
