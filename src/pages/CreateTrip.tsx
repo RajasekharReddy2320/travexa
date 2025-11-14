@@ -196,16 +196,16 @@ const CreateTrip = () => {
               </div>
 
               <div className="flex gap-4">
-                <Button type="submit" disabled={loading} className="flex-1">
-                  {loading ? (
-                    "Creating..."
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Create Trip
-                    </>
-                  )}
-                </Button>
+              <Button type="submit" disabled={loading} className="flex-1">
+                {loading ? (
+                  "Connecting..."
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Connect with Agent
+                  </>
+                )}
+              </Button>
                 <Button type="button" variant="outline" onClick={() => navigate("/plan-trip")}>
                   Cancel
                 </Button>
