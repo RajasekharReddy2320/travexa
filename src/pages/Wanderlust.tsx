@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import DashboardNav from "@/components/DashboardNav";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { PostCard } from "@/components/PostCard";
-import { CreateTravelGroupDialog } from "@/components/CreateTravelGroupDialog";
-import { TravelGroupCard } from "@/components/TravelGroupCard";
 import { useToast } from "@/hooks/use-toast";
 
 interface Post {
@@ -24,33 +22,14 @@ interface Post {
   };
 }
 
-interface TravelGroup {
-  id: string;
-  title: string;
-  from_location: string;
-  to_location: string;
-  travel_date: string;
-  travel_mode: string;
-  max_members: number;
-  description: string | null;
-  creator_id: string;
-  profiles: {
-    full_name: string | null;
-    avatar_url: string | null;
-  };
-  member_count: number;
-}
-
 const Wanderlust = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [travelGroups, setTravelGroups] = useState<TravelGroup[]>([]);
   const [userLikes, setUserLikes] = useState<Set<string>>(new Set());
   const [userSaves, setUserSaves] = useState<Set<string>>(new Set());
-  const [userGroupMemberships, setUserGroupMemberships] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     checkAuthAndLoad();
@@ -65,7 +44,7 @@ const Wanderlust = () => {
     }
 
     setCurrentUserId(session.user.id);
-    await Promise.all([loadPosts(), loadTravelGroups(), loadUserInteractions(session.user.id)]);
+    await Promise.all([loadPosts(), loadUserInteractions(session.user.id)]);
     setIsLoading(false);
   };
 
@@ -94,62 +73,19 @@ const Wanderlust = () => {
     setPosts(data as any);
   };
 
-  const loadTravelGroups = async () => {
-    const { data, error } = await supabase
-      .from("travel_groups")
-      .select(`
-        *,
-        profiles:creator_id (
-          full_name,
-          avatar_url
-        )
-      `)
-      .gte("travel_date", new Date().toISOString().split("T")[0])
-      .order("travel_date", { ascending: true });
-
-    if (error) {
-      console.error("Error loading travel groups:", error);
-      return;
-    }
-
-    // Get member counts
-    const groupsWithCounts = await Promise.all(
-      (data || []).map(async (group: any) => {
-        const { count } = await (supabase as any)
-          .from("travel_group_members")
-          .select("*", { count: "exact", head: true })
-          .eq("group_id", group.id)
-          .eq("status", "accepted");
-
-        return { ...group, member_count: count || 0 };
-      })
-    );
-
-    setTravelGroups(groupsWithCounts as any);
-  };
-
   const loadUserInteractions = async (userId: string) => {
-    const [likesData, savesData, membershipsData] = await Promise.all([
+    const [likesData, savesData] = await Promise.all([
       supabase.from("post_likes").select("post_id").eq("user_id", userId),
       supabase.from("post_saves").select("post_id").eq("user_id", userId),
-      supabase.from("travel_group_members").select("group_id").eq("user_id", userId).eq("status", "accepted"),
     ]);
 
     if (likesData.data) setUserLikes(new Set(likesData.data.map((l: any) => l.post_id)));
     if (savesData.data) setUserSaves(new Set(savesData.data.map((s: any) => s.post_id)));
-    if (membershipsData.data) setUserGroupMemberships(new Set(membershipsData.data.map((m: any) => m.group_id)));
   };
 
   const handlePostUpdate = () => {
     if (currentUserId) {
       loadPosts();
-      loadUserInteractions(currentUserId);
-    }
-  };
-
-  const handleGroupUpdate = () => {
-    if (currentUserId) {
-      loadTravelGroups();
       loadUserInteractions(currentUserId);
     }
   };
@@ -166,18 +102,8 @@ const Wanderlust = () => {
       )
       .subscribe();
 
-    const groupsChannel = supabase
-      .channel("groups-changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "travel_groups" },
-        () => loadTravelGroups()
-      )
-      .subscribe();
-
     return () => {
       supabase.removeChannel(postsChannel);
-      supabase.removeChannel(groupsChannel);
     };
   }, [currentUserId]);
 
@@ -195,16 +121,12 @@ const Wanderlust = () => {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Wanderlust</h1>
-          <div className="flex gap-2">
-            <CreatePostDialog onPostCreated={handlePostUpdate} />
-            <CreateTravelGroupDialog onGroupCreated={handleGroupUpdate} />
-          </div>
+          <CreatePostDialog onPostCreated={handlePostUpdate} />
         </div>
 
         <Tabs defaultValue="feed" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="feed">Feed</TabsTrigger>
-            <TabsTrigger value="groups">Travel Groups</TabsTrigger>
             <TabsTrigger value="connections">Connections</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="saved">Saved</TabsTrigger>
@@ -226,26 +148,6 @@ const Wanderlust = () => {
                   onUpdate={handlePostUpdate}
                 />
               ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="groups" className="space-y-6">
-            {travelGroups.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No travel groups yet. Create one to find travel companions!</p>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {travelGroups.map((group) => (
-                  <TravelGroupCard
-                    key={group.id}
-                    group={group}
-                    currentUserId={currentUserId!}
-                    isMember={userGroupMemberships.has(group.id)}
-                    onUpdate={handleGroupUpdate}
-                  />
-                ))}
-              </div>
             )}
           </TabsContent>
 

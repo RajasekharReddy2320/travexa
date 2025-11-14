@@ -11,6 +11,8 @@ import DashboardNav from "@/components/DashboardNav";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Search, MapPin, Users, UserPlus, MessageCircle, UserCheck, Calendar } from "lucide-react";
+import { CreateTravelGroupDialog } from "@/components/CreateTravelGroupDialog";
+import { TravelGroupCard } from "@/components/TravelGroupCard";
 
 interface SearchResult {
   id: string;
@@ -22,6 +24,23 @@ interface SearchResult {
   connection_status: string;
 }
 
+interface TravelGroup {
+  id: string;
+  title: string;
+  from_location: string;
+  to_location: string;
+  travel_date: string;
+  travel_mode: string;
+  max_members: number;
+  description: string | null;
+  creator_id: string;
+  profiles: {
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+  member_count: number;
+}
+
 const TravelBuddies = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [destination, setDestination] = useState("");
@@ -29,6 +48,8 @@ const TravelBuddies = () => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [travelGroups, setTravelGroups] = useState<TravelGroup[]>([]);
+  const [userGroupMemberships, setUserGroupMemberships] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -38,7 +59,64 @@ const TravelBuddies = () => {
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) setCurrentUserId(user.id);
+    if (user) {
+      setCurrentUserId(user.id);
+      loadTravelGroups();
+      loadUserGroupMemberships(user.id);
+    }
+  };
+
+  const loadTravelGroups = async () => {
+    const { data, error } = await supabase
+      .from("travel_groups")
+      .select(`
+        *,
+        profiles:creator_id (
+          full_name,
+          avatar_url
+        )
+      `)
+      .gte("travel_date", new Date().toISOString().split("T")[0])
+      .order("travel_date", { ascending: true });
+
+    if (error) {
+      console.error("Error loading travel groups:", error);
+      return;
+    }
+
+    // Get member counts
+    const groupsWithCounts = await Promise.all(
+      (data || []).map(async (group: any) => {
+        const { count } = await (supabase as any)
+          .from("travel_group_members")
+          .select("*", { count: "exact", head: true })
+          .eq("group_id", group.id)
+          .eq("status", "accepted");
+
+        return { ...group, member_count: count || 0 };
+      })
+    );
+
+    setTravelGroups(groupsWithCounts as any);
+  };
+
+  const loadUserGroupMemberships = async (userId: string) => {
+    const { data } = await supabase
+      .from("travel_group_members")
+      .select("group_id")
+      .eq("user_id", userId)
+      .eq("status", "accepted");
+
+    if (data) {
+      setUserGroupMemberships(new Set(data.map((m) => m.group_id)));
+    }
+  };
+
+  const handleGroupUpdate = () => {
+    loadTravelGroups();
+    if (currentUserId) {
+      loadUserGroupMemberships(currentUserId);
+    }
   };
 
   const performSearch = async () => {
@@ -315,18 +393,36 @@ const TravelBuddies = () => {
           </TabsContent>
 
           <TabsContent value="travel-groups" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Travel Groups</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-muted-foreground">
-                  <Users className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p>Browse and join travel groups with similar interests</p>
-                  <Button className="mt-4">Explore Groups</Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="mb-6 flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold">Travel Groups</h2>
+                <p className="text-muted-foreground">Find travel companions for your next adventure</p>
+              </div>
+              <CreateTravelGroupDialog onGroupCreated={handleGroupUpdate} />
+            </div>
+            
+            {travelGroups.length === 0 ? (
+              <Card>
+                <CardContent className="pt-12 pb-12">
+                  <div className="text-center text-muted-foreground">
+                    <Users className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <p>No travel groups yet. Create one to find travel companions!</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {travelGroups.map((group) => (
+                  <TravelGroupCard
+                    key={group.id}
+                    group={group}
+                    currentUserId={currentUserId!}
+                    isMember={userGroupMemberships.has(group.id)}
+                    onUpdate={handleGroupUpdate}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
