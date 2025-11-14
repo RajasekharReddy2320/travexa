@@ -1,19 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Calendar, IndianRupee, Users, Save, UserCog } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Users, UserCog } from "lucide-react";
 import DashboardNav from "@/components/DashboardNav";
 
 const CreateTrip = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
   const [tripData, setTripData] = useState({
     title: "",
     destination: "",
@@ -36,45 +34,16 @@ const CreateTrip = () => {
       return;
     }
 
-    setLoading(true);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-
-    const { error } = await supabase
-      .from("trips")
-      .insert({
-        user_id: user.id,
-        title: tripData.title,
-        destination: tripData.destination,
-        start_date: tripData.start_date,
-        end_date: tripData.end_date,
-        trip_type: 'manual',
-        budget_inr: null,
-        group_size: parseInt(tripData.group_size),
-        notes: tripData.notes + (tripData.budget_range ? `\n\nBudget Range: ${tripData.budget_range}` : '')
-      });
-
-    setLoading(false);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create trip",
-        variant: "destructive"
-      });
-      return;
-    }
+    // Store trip preferences for agents to reference
+    localStorage.setItem('tripPreferences', JSON.stringify(tripData));
 
     toast({
-      title: "Success",
-      description: "Trip created successfully!"
+      title: "Preferences Saved",
+      description: "Now connect with an agent or guide to plan your trip"
     });
 
-    navigate("/plan-trip");
+    // Navigate to agents page
+    navigate("/travel-agents");
   };
 
   return (
@@ -195,15 +164,9 @@ const CreateTrip = () => {
               </div>
 
               <div className="flex gap-4">
-              <Button type="submit" disabled={loading} className="flex-1">
-                {loading ? (
-                  "Connecting..."
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Connect with Agent
-                  </>
-                )}
+              <Button type="submit" className="flex-1">
+                <UserCog className="mr-2 h-4 w-4" />
+                Find Travel Agents
               </Button>
                 <Button type="button" variant="outline" onClick={() => navigate("/plan-trip")}>
                   Cancel
