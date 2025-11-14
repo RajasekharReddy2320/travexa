@@ -29,6 +29,7 @@ import Knowledge from "./pages/Knowledge";
 import NotFound from "./pages/NotFound";
 import TravelAgents from "./pages/TravelAgents";
 import LocalGuides from "./pages/LocalGuides";
+import TravelTinder from "./pages/TravelTinder";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/cart" element={<Cart />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/travel-buddies" element={<TravelBuddies />} />
+            <Route path="/travel-tinder" element={<TravelTinder />} />
             <Route path="/photo-vault" element={<PhotoVault />} />
             <Route path="/knowledge" element={<Knowledge />} />
             <Route path="/profile/:userId" element={<UserProfile />} />

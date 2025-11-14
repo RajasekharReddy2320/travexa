@@ -7,124 +7,132 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, MapPin, Users, ArrowLeft, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface TravelAgent {
+interface TravelAgency {
   id: string;
   name: string;
-  avatar: string;
+  logo: string;
   rating: number;
   reviews: number;
   specialization: string[];
-  experience: string;
-  location: string;
+  established: string;
+  locations: string[];
   planningFee: number;
   tripsPlanned: number;
   description: string;
+  teamSize: number;
 }
 
-const travelAgents: TravelAgent[] = [
+const travelAgencies: TravelAgency[] = [
   {
     id: "1",
-    name: "Rajesh Kumar",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Rajesh",
+    name: "Himalayan Explorers",
+    logo: "https://api.dicebear.com/7.x/shapes/svg?seed=Himalayan",
     rating: 4.9,
-    reviews: 234,
-    specialization: ["Adventure", "Mountain Treks", "North India"],
-    experience: "8 years",
-    location: "Delhi",
+    reviews: 1234,
+    specialization: ["Adventure", "Mountain Treks", "Trekking"],
+    established: "2010",
+    locations: ["Delhi", "Manali", "Leh"],
     planningFee: 999,
-    tripsPlanned: 500,
-    description: "Expert in planning adventure trips and mountain expeditions across the Himalayas."
+    tripsPlanned: 5200,
+    teamSize: 25,
+    description: "Leading adventure travel agency specializing in Himalayan expeditions and mountain tourism with expert guides."
   },
   {
     id: "2",
-    name: "Priya Sharma",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya",
+    name: "Coastal Dreams Travel",
+    logo: "https://api.dicebear.com/7.x/shapes/svg?seed=Coastal",
     rating: 4.8,
-    reviews: 189,
-    specialization: ["Beach", "Honeymoon", "Luxury Travel"],
-    experience: "6 years",
-    location: "Mumbai",
+    reviews: 989,
+    specialization: ["Beach", "Honeymoon", "Luxury Resorts"],
+    established: "2012",
+    locations: ["Mumbai", "Goa", "Kerala"],
     planningFee: 1299,
-    tripsPlanned: 380,
-    description: "Specializes in romantic getaways and luxury beach destinations."
+    tripsPlanned: 4180,
+    teamSize: 18,
+    description: "Premium beach and luxury resort specialists offering curated romantic getaways and coastal experiences."
   },
   {
     id: "3",
-    name: "Arjun Patel",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Arjun",
+    name: "Heritage Trails India",
+    logo: "https://api.dicebear.com/7.x/shapes/svg?seed=Heritage",
     rating: 4.7,
-    reviews: 156,
-    specialization: ["Cultural Tours", "Heritage Sites", "South India"],
-    experience: "5 years",
-    location: "Bangalore",
+    reviews: 756,
+    specialization: ["Cultural Tours", "Heritage Sites", "Historical"],
+    established: "2008",
+    locations: ["Jaipur", "Agra", "Varanasi"],
     planningFee: 799,
-    tripsPlanned: 290,
-    description: "Cultural tour expert with deep knowledge of South Indian heritage sites."
+    tripsPlanned: 3890,
+    teamSize: 15,
+    description: "Cultural tourism experts offering immersive heritage experiences across India's historical landmarks."
   },
   {
     id: "4",
-    name: "Meera Iyer",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Meera",
+    name: "Wildlife Wanderers",
+    logo: "https://api.dicebear.com/7.x/shapes/svg?seed=Wildlife",
     rating: 4.9,
-    reviews: 267,
-    specialization: ["Wildlife", "Photography", "National Parks"],
-    experience: "10 years",
-    location: "Pune",
+    reviews: 1567,
+    specialization: ["Wildlife", "Safaris", "Photography Tours"],
+    established: "2005",
+    locations: ["Bangalore", "Ranthambore", "Jim Corbett"],
     planningFee: 1499,
-    tripsPlanned: 620,
-    description: "Wildlife enthusiast offering exceptional photography-focused safari experiences."
+    tripsPlanned: 6820,
+    teamSize: 32,
+    description: "India's premier wildlife safari agency with exclusive access to top national parks and expert naturalists."
   },
   {
     id: "5",
-    name: "Vikram Singh",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Vikram",
+    name: "Budget Backpackers",
+    logo: "https://api.dicebear.com/7.x/shapes/svg?seed=Budget",
     rating: 4.6,
-    reviews: 142,
-    specialization: ["Budget Travel", "Backpacking", "Youth Groups"],
-    experience: "4 years",
-    location: "Jaipur",
+    reviews: 642,
+    specialization: ["Budget Travel", "Backpacking", "Youth Travel"],
+    established: "2015",
+    locations: ["Delhi", "Mumbai", "Bangalore"],
     planningFee: 599,
-    tripsPlanned: 210,
-    description: "Budget travel expert helping young travelers explore India affordably."
+    tripsPlanned: 2810,
+    teamSize: 12,
+    description: "Affordable travel solutions for young adventurers exploring India on a budget without compromising experiences."
   },
   {
     id: "6",
-    name: "Ananya Reddy",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya",
+    name: "Family First Holidays",
+    logo: "https://api.dicebear.com/7.x/shapes/svg?seed=Family",
     rating: 4.8,
-    reviews: 198,
-    specialization: ["Family Tours", "Kid-Friendly", "Resorts"],
-    experience: "7 years",
-    location: "Hyderabad",
+    reviews: 1098,
+    specialization: ["Family Tours", "Kid-Friendly", "Theme Parks"],
+    established: "2011",
+    locations: ["Chennai", "Hyderabad", "Pune"],
     planningFee: 899,
-    tripsPlanned: 445,
-    description: "Family vacation specialist ensuring memorable experiences for all ages."
+    tripsPlanned: 4645,
+    teamSize: 20,
+    description: "Family vacation specialists creating memorable multi-generational travel experiences across India."
   },
   {
     id: "7",
-    name: "Kabir Malhotra",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Kabir",
+    name: "Global Getaways",
+    logo: "https://api.dicebear.com/7.x/shapes/svg?seed=Global",
     rating: 4.9,
-    reviews: 312,
-    specialization: ["International", "Europe", "Visa Assistance"],
-    experience: "12 years",
-    location: "Delhi",
+    reviews: 2112,
+    specialization: ["International", "Europe", "Visa Services"],
+    established: "2003",
+    locations: ["Delhi", "Mumbai", "Bangalore"],
     planningFee: 1999,
-    tripsPlanned: 780,
-    description: "International travel expert with extensive European tour planning experience."
+    tripsPlanned: 8780,
+    teamSize: 45,
+    description: "Full-service international travel agency with expertise in European tours, visa assistance, and global destinations."
   }
 ];
 
 export default function TravelAgents() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  const [selectedAgency, setSelectedAgency] = useState<string | null>(null);
 
-  const handleConnect = (agent: TravelAgent) => {
-    setSelectedAgent(agent.id);
+  const handleConnect = (agency: TravelAgency) => {
+    setSelectedAgency(agency.id);
     toast({
       title: "Connection Request Sent!",
-      description: `${agent.name} will contact you shortly to plan your perfect trip.`,
+      description: `${agency.name} will contact you shortly to plan your perfect trip.`,
     });
   };
 
@@ -140,41 +148,41 @@ export default function TravelAgents() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
-          <h1 className="text-4xl font-bold mb-2">Connect with Travel Agents</h1>
+          <h1 className="text-4xl font-bold mb-2">Travel Agencies</h1>
           <p className="text-muted-foreground text-lg">
-            Let expert agents plan your perfect trip based on your interests and budget
+            Connect with trusted travel agencies to plan your perfect trip
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {travelAgents.map((agent) => (
-            <Card key={agent.id} className="hover:shadow-lg transition-shadow">
+          {travelAgencies.map((agency) => (
+            <Card key={agency.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start gap-4">
                   <Avatar className="h-16 w-16">
-                    <AvatarImage src={agent.avatar} alt={agent.name} />
-                    <AvatarFallback>{agent.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    <AvatarImage src={agency.logo} alt={agency.name} />
+                    <AvatarFallback>{agency.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <CardTitle className="flex items-center gap-2">
-                      {agent.name}
-                      {selectedAgent === agent.id && (
+                      {agency.name}
+                      {selectedAgency === agency.id && (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       )}
                     </CardTitle>
                     <div className="flex items-center gap-1 mt-1">
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold">{agent.rating}</span>
-                      <span className="text-muted-foreground text-sm">({agent.reviews})</span>
+                      <span className="font-semibold">{agency.rating}</span>
+                      <span className="text-muted-foreground text-sm">({agency.reviews})</span>
                     </div>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <CardDescription>{agent.description}</CardDescription>
+                <CardDescription>{agency.description}</CardDescription>
                 
                 <div className="flex flex-wrap gap-2">
-                  {agent.specialization.map((spec) => (
+                  {agency.specialization.map((spec) => (
                     <Badge key={spec} variant="secondary">{spec}</Badge>
                   ))}
                 </div>
@@ -182,17 +190,17 @@ export default function TravelAgents() {
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{agent.location}</span>
+                    <span>{agency.locations.join(", ")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>{agent.tripsPlanned}+ trips planned</span>
+                    <span>{agency.tripsPlanned}+ trips planned | Team: {agency.teamSize}</span>
                   </div>
                 </div>
 
                 <div className="pt-2 border-t">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-primary">₹{agent.planningFee}</span>
+                    <span className="text-2xl font-bold text-primary">₹{agency.planningFee}</span>
                     <span className="text-muted-foreground text-sm">planning fee</span>
                   </div>
                 </div>
@@ -200,10 +208,10 @@ export default function TravelAgents() {
               <CardFooter>
                 <Button 
                   className="w-full" 
-                  onClick={() => handleConnect(agent)}
-                  disabled={selectedAgent === agent.id}
+                  onClick={() => handleConnect(agency)}
+                  disabled={selectedAgency === agency.id}
                 >
-                  {selectedAgent === agent.id ? "Request Sent" : "Connect & Plan Trip"}
+                  {selectedAgency === agency.id ? "Request Sent" : "Connect & Plan Trip"}
                 </Button>
               </CardFooter>
             </Card>
