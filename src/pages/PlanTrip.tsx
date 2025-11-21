@@ -468,15 +468,13 @@ export default function PlanTrip() {
                                     <h4 className="font-semibold mb-1">
                                       Day {typeof day.day === 'number' ? day.day : index + 1}
                                     </h4>
-                                    <p className="text-sm text-muted-foreground">
-                                      {typeof day.activities === 'string' 
-                                        ? day.activities 
-                                        : Array.isArray(day.activities)
-                                        ? day.activities.join(', ')
-                                        : typeof day.activities === 'object'
-                                        ? JSON.stringify(day.activities)
-                                        : String(day.activities || '')}
-                                    </p>
+                                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                       {typeof day.activities === 'string' 
+                                         ? day.activities 
+                                         : Array.isArray(day.activities)
+                                         ? day.activities.join(', ')
+                                         : 'No activities listed'}
+                                     </p>
                                   </div>
                                   <Button
                                     size="sm"

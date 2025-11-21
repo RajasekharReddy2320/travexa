@@ -99,7 +99,7 @@ serve(async (req) => {
       systemPrompt += " Focus on cost-effective options, budget accommodations, free or cheap activities, local transportation, and money-saving tips.";
     }
     
-    systemPrompt += " Always provide costs in INR (Indian Rupees). Format your response as JSON with: overview, dailyPlan (array of {day, activities}), estimatedCostINR, and tips.";
+    systemPrompt += " Always provide costs in INR (Indian Rupees). CRITICAL: Return ONLY a valid JSON object (no markdown, no code blocks) with this EXACT structure: {\"overview\": \"string description\", \"dailyPlan\": [{\"day\": 1, \"activities\": \"comma-separated string of activities\"}], \"estimatedCostINR\": number, \"tips\": \"string of tips\"}. The activities field MUST be a plain string, not an array or object.";
 
     let prompt;
     if (regenerateDay && existingItinerary) {
@@ -113,7 +113,7 @@ serve(async (req) => {
 
 Current Day ${regenerateDay} activities: ${existingItinerary.dailyPlan?.find((d: any) => d.day === regenerateDay)?.activities || 'None'}
 
-Provide a COMPLETE new itinerary with all days, but focus on making Day ${regenerateDay} different and more interesting. Format as valid JSON only.`;
+Provide a COMPLETE new itinerary with all days, but focus on making Day ${regenerateDay} different and more interesting. Return ONLY valid JSON with structure: {\"overview\": \"string\", \"dailyPlan\": [{\"day\": number, \"activities\": \"string\"}], \"estimatedCostINR\": number, \"tips\": \"string\"}. No markdown, no code blocks.`;
     } else {
       prompt = `Create a detailed travel itinerary for:
 - Destination: ${destination}
@@ -123,7 +123,7 @@ Provide a COMPLETE new itinerary with all days, but focus on making Day ${regene
 - Interests: ${interests.join(', ')}
 - Planner Mode: ${plannerMode || 'balanced'}
 
-Provide a day-by-day breakdown with activities, estimated costs in INR, and travel tips. Format as valid JSON only.`;
+Provide a day-by-day breakdown with activities, estimated costs in INR, and travel tips. Return ONLY valid JSON with this EXACT structure: {\"overview\": \"string description\", \"dailyPlan\": [{\"day\": 1, \"activities\": \"Morning: activity 1, Afternoon: activity 2, Evening: activity 3\"}], \"estimatedCostINR\": number, \"tips\": \"string tips\"}. Activities MUST be a descriptive string, not an array or object. No markdown, no code blocks.`;
     }
 
     let response;
@@ -238,13 +238,37 @@ Provide a day-by-day breakdown with activities, estimated costs in INR, and trav
     
     let itinerary = data.choices[0].message.content;
     
-    // Clean up the response if it contains markdown code blocks
+    // Clean up the response - remove any markdown formatting
+    itinerary = itinerary.trim();
     if (itinerary.includes('```json')) {
       itinerary = itinerary.replace(/```json\n?/g, '').replace(/```\n?/g, '');
     }
+    if (itinerary.includes('```')) {
+      itinerary = itinerary.replace(/```\n?/g, '');
+    }
+    
+    // Remove any leading/trailing whitespace and newlines
+    itinerary = itinerary.trim();
     
     // Parse to validate JSON
     const parsedItinerary = JSON.parse(itinerary);
+    
+    // Validate the structure
+    if (!parsedItinerary.dailyPlan || !Array.isArray(parsedItinerary.dailyPlan)) {
+      throw new Error('Invalid itinerary format: missing dailyPlan array');
+    }
+    
+    // Ensure activities are strings
+    parsedItinerary.dailyPlan = parsedItinerary.dailyPlan.map((day: any, index: number) => ({
+      day: typeof day.day === 'number' ? day.day : index + 1,
+      activities: typeof day.activities === 'string' 
+        ? day.activities 
+        : Array.isArray(day.activities)
+        ? day.activities.join(', ')
+        : JSON.stringify(day.activities)
+    }));
+    
+    console.log('[Validation] Itinerary structure validated and normalized');
 
     return new Response(
       JSON.stringify({ itinerary: parsedItinerary }),
