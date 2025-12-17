@@ -24,9 +24,9 @@ const DashboardNav = () => {
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center gap-4 px-4">
+      <div className="container flex h-16 items-center gap-2 px-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 font-bold text-xl group">
+        <Link to="/" className="flex items-center gap-2 font-bold text-xl group shrink-0">
           <Plane className="h-6 w-6 text-accent transition-transform group-hover:rotate-12" />
           <span className="hidden sm:inline-block">
             Trave<span className="text-accent">X</span>a
@@ -47,104 +47,107 @@ const DashboardNav = () => {
           </div>
         </form>
 
+        {/* Spacer to push toggle button to right when nav is collapsed */}
+        {!isNavExpanded && <div className="flex-1" />}
+
         {/* Navigation Tabs */}
         {isNavExpanded && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 overflow-hidden">
             <Link
               to="/"
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+              className={`flex items-center gap-1.5 px-2 py-2 rounded-md transition-colors whitespace-nowrap text-sm ${
                 isActive("/")
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
               }`}
             >
-              <Compass className="h-4 w-4" />
-              <span className="hidden lg:inline-block">Wanderlust</span>
+              <Compass className="h-4 w-4 shrink-0" />
+              <span className="hidden xl:inline-block">Wanderlust</span>
             </Link>
 
             <Link
               to="/travel-buddies"
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+              className={`flex items-center gap-1.5 px-2 py-2 rounded-md transition-colors whitespace-nowrap text-sm ${
                 isActive("/travel-buddies")
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
               }`}
             >
-              <UserCheck className="h-4 w-4" />
-              <span className="hidden lg:inline-block">Travel Buddies</span>
+              <UserCheck className="h-4 w-4 shrink-0" />
+              <span className="hidden xl:inline-block">Buddies</span>
             </Link>
 
             <Link
               to="/plan-trip"
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+              className={`flex items-center gap-1.5 px-2 py-2 rounded-md transition-colors whitespace-nowrap text-sm ${
                 isActive("/plan-trip")
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
               }`}
             >
-              <Plane className="h-4 w-4" />
-              <span className="hidden lg:inline-block">Trip Planner</span>
+              <Plane className="h-4 w-4 shrink-0" />
+              <span className="hidden xl:inline-block">Planner</span>
             </Link>
 
             <Link
               to="/book-transport"
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+              className={`flex items-center gap-1.5 px-2 py-2 rounded-md transition-colors whitespace-nowrap text-sm ${
                 isActive("/book-transport") || isActive("/my-tickets")
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
               }`}
             >
-              <Ticket className="h-4 w-4" />
-              <span className="hidden lg:inline-block">Book Tickets</span>
+              <Ticket className="h-4 w-4 shrink-0" />
+              <span className="hidden xl:inline-block">Tickets</span>
             </Link>
 
             <Link
               to="/photo-vault"
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+              className={`flex items-center gap-1.5 px-2 py-2 rounded-md transition-colors whitespace-nowrap text-sm ${
                 isActive("/photo-vault")
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
               }`}
             >
-              <Search className="h-4 w-4" />
-              <span className="hidden lg:inline-block">Photo Vault</span>
+              <Search className="h-4 w-4 shrink-0" />
+              <span className="hidden xl:inline-block">Photos</span>
             </Link>
 
             <Link
               to="/knowledge"
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+              className={`flex items-center gap-1.5 px-2 py-2 rounded-md transition-colors whitespace-nowrap text-sm ${
                 isActive("/knowledge")
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
               }`}
             >
-              <MessageSquare className="h-4 w-4" />
-              <span className="hidden lg:inline-block">Knowledge</span>
+              <MessageSquare className="h-4 w-4 shrink-0" />
+              <span className="hidden xl:inline-block">Knowledge</span>
             </Link>
 
             <Link
               to="/cart"
-              className="relative flex items-center gap-2 px-3 py-2 rounded-md transition-colors hover:bg-accent/50"
+              className="relative flex items-center gap-1.5 px-2 py-2 rounded-md transition-colors hover:bg-accent/50 whitespace-nowrap text-sm"
             >
-              <ShoppingCart className="h-4 w-4" />
+              <ShoppingCart className="h-4 w-4 shrink-0" />
               {itemCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
                   {itemCount}
                 </Badge>
               )}
-              <span className="hidden lg:inline-block">Cart</span>
+              <span className="hidden xl:inline-block">Cart</span>
             </Link>
 
             <Link
               to="/profile"
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+              className={`flex items-center gap-1.5 px-2 py-2 rounded-md transition-colors whitespace-nowrap text-sm ${
                 isActive("/profile")
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
               }`}
             >
-              <User className="h-4 w-4" />
-              <span className="hidden lg:inline-block">Profile</span>
+              <User className="h-4 w-4 shrink-0" />
+              <span className="hidden xl:inline-block">Profile</span>
             </Link>
           </div>
         )}
@@ -154,14 +157,9 @@ const DashboardNav = () => {
           variant="ghost"
           size="icon"
           onClick={() => setIsNavExpanded(!isNavExpanded)}
-          className="group relative"
+          className="shrink-0"
         >
-          <div className="group-hover:opacity-0 transition-opacity">
-            {isNavExpanded ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <Menu className="h-5 w-5" />
-          </div>
+          {isNavExpanded ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
     </nav>
