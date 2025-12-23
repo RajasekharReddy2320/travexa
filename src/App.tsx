@@ -30,6 +30,7 @@ import NotFound from "./pages/NotFound";
 import TravelAgents from "./pages/TravelAgents";
 import LocalGuides from "./pages/LocalGuides";
 import TravelTinder from "./pages/TravelTinder";
+import PlannerV2 from "./pages/PlannerV2";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/book" element={<Book />} />
             <Route path="/travel-agents" element={<TravelAgents />} />
             <Route path="/local-guides" element={<LocalGuides />} />
+            <Route path="/planner-v2" element={<PlannerV2 />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
