@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.create-booking]
 verify_jwt = true
+
+[functions.generate-trip-plan]
+verify_jwt = false
