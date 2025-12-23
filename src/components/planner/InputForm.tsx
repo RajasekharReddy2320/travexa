@@ -19,6 +19,7 @@ const interestOptions = [
 const budgetOptions = ['Budget', 'Mid-Range', 'Luxury'];
 
 const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
+  const [currentLocation, setCurrentLocation] = useState('');
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -36,16 +37,32 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!destination || !startDate || !endDate) return;
-    onSubmit({ destination, startDate, endDate, travelers, budget, interests });
+    if (!currentLocation || !destination || !startDate || !endDate) return;
+    onSubmit({ currentLocation, destination, startDate, endDate, travelers, budget, interests });
   };
 
   return (
     <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-6 md:p-8 max-w-2xl mx-auto mb-10 shadow-sm">
-      {/* Destination */}
+      {/* Current Location */}
       <div className="mb-6">
         <Label className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
           <MapPin size={16} className="text-primary" />
+          Current Location (Departure City)
+        </Label>
+        <Input
+          type="text"
+          placeholder="e.g., Mumbai, India"
+          value={currentLocation}
+          onChange={(e) => setCurrentLocation(e.target.value)}
+          className="bg-background"
+          required
+        />
+      </div>
+
+      {/* Destination */}
+      <div className="mb-6">
+        <Label className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+          <MapPin size={16} className="text-destructive" />
           Destination
         </Label>
         <Input
@@ -159,7 +176,7 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
       {/* Submit */}
       <Button
         type="submit"
-        disabled={isLoading || !destination || !startDate || !endDate}
+        disabled={isLoading || !currentLocation || !destination || !startDate || !endDate}
         className="w-full py-6 text-lg font-bold"
         size="lg"
       >

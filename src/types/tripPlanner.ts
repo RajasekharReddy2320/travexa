@@ -1,4 +1,5 @@
 export interface TripParams {
+  currentLocation: string;
   destination: string;
   startDate: string;
   endDate: string;

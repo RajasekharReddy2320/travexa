@@ -11,8 +11,9 @@ serve(async (req) => {
   }
 
   try {
-    const { destination, startDate, endDate, travelers, budget, interests } = await req.json();
+    const { currentLocation, destination, startDate, endDate, travelers, budget, interests } = await req.json();
     
+    console.log("Generating trip plan:", { currentLocation, destination, startDate, endDate, travelers, budget, interests });
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -25,10 +26,15 @@ serve(async (req) => {
     const systemPrompt = `You are a travel planning AI. Generate detailed trip itineraries in JSON format.
 Return ONLY valid JSON with no additional text. The response must be a valid JSON object.`;
 
-    const userPrompt = `Create a ${numDays}-day trip itinerary for ${travelers} traveler(s) to ${destination}.
+    const userPrompt = `Create a ${numDays}-day trip itinerary for ${travelers} traveler(s) traveling from ${currentLocation} to ${destination}.
+Departure city: ${currentLocation}
+Destination: ${destination}
 Budget level: ${budget}
 Interests: ${interests.join(", ")}
 Travel dates: ${startDate} to ${endDate}
+
+IMPORTANT: The first step should be the transport (flight/train/bus) FROM ${currentLocation} TO ${destination}. Include specific departure station/airport in ${currentLocation} and arrival station/airport in ${destination}.
+The last step should be the return transport FROM ${destination} TO ${currentLocation}.
 
 Return a JSON object with this exact structure:
 {
