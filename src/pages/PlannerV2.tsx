@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const PlannerV2 = () => {
   const [tripData, setTripData] = useState<TripResponse | null>(null);
+  const [tripDestination, setTripDestination] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -39,6 +40,7 @@ const PlannerV2 = () => {
       }
 
       setTripData(data);
+      setTripDestination(params.destination);
       toast({
         title: "Trip Generated!",
         description: `Your ${params.destination} itinerary is ready.`,
@@ -157,7 +159,7 @@ const PlannerV2 = () => {
                   </div>
 
                   {/* Interactive Map */}
-                  <ItineraryMap steps={tripData.steps} />
+                  <ItineraryMap steps={tripData.steps} destination={tripDestination} />
 
                   {/* Timeline Connector Line (Visual) */}
                   <div className="relative">
