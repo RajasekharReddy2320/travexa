@@ -31,6 +31,9 @@ const categoryColors: Record<string, string> = {
 };
 
 const ItineraryCard: React.FC<ItineraryCardProps> = ({ step, onAdd, isAdded }) => {
+  // Item is addable to cart if it has an estimated cost > 0
+  const canAddToCart = step.estimatedCost && step.estimatedCost > 0;
+
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <CardContent className="p-6">
@@ -50,7 +53,7 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({ step, onAdd, isAdded }) =
                 {categoryIcons[step.category]}
                 <span className="ml-1 capitalize">{step.category}</span>
               </Badge>
-              {step.isBookable && (
+              {canAddToCart && (
                 <Badge variant="secondary" className="text-xs">
                   Bookable
                 </Badge>
@@ -69,7 +72,7 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({ step, onAdd, isAdded }) =
                 <Clock size={14} />
                 {step.duration}
               </span>
-              {step.estimatedCost && (
+              {step.estimatedCost && step.estimatedCost > 0 && (
                 <span className="flex items-center gap-1 font-medium text-foreground">
                   <IndianRupee size={14} />
                   {step.estimatedCost.toLocaleString()}
@@ -78,8 +81,8 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({ step, onAdd, isAdded }) =
             </div>
           </div>
 
-          {/* Actions */}
-          {step.isBookable && (
+          {/* Actions - Show for any item with cost */}
+          {canAddToCart && (
             <div className="flex gap-2 flex-shrink-0">
               <Button
                 variant={isAdded ? "secondary" : "default"}
