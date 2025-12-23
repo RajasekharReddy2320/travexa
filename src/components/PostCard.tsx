@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2, Bookmark, Trash2, MapPin, Calendar, Plane, IndianRupee } from "lucide-react";
+import { Heart, MessageCircle, Share2, Bookmark, Trash2, MapPin, Calendar, Plane, IndianRupee, Send } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +48,7 @@ export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }
   const [showComments, setShowComments] = useState(false);
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleLike = async () => {
     try {
@@ -121,6 +123,11 @@ export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }
     }
   };
 
+  const handleDirectMessage = () => {
+    // Navigate to Explore page with the messages tab open and this user selected
+    navigate("/", { state: { openMessages: true, userId: post.user_id } });
+  };
+
   const getInitials = (name: string | null) => {
     if (!name) return "U";
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -131,19 +138,26 @@ export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center gap-3 pb-3">
-        <Avatar className="cursor-pointer" onClick={() => window.location.href = `/profile/${post.user_id}`}>
+        <Avatar className="cursor-pointer" onClick={() => navigate(`/profile/${post.user_id}`)}>
           <AvatarImage src={post.profiles.avatar_url || undefined} />
           <AvatarFallback>{getInitials(post.profiles.full_name)}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <p className="font-semibold cursor-pointer hover:underline" onClick={() => window.location.href = `/profile/${post.user_id}`}>
+          <p className="font-semibold cursor-pointer hover:underline" onClick={() => navigate(`/profile/${post.user_id}`)}>
             {post.profiles.full_name || "Unknown User"}
           </p>
           <p className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
           </p>
         </div>
-        {!isOwner && <ConnectButton userId={post.user_id} currentUserId={currentUserId} />}
+        {!isOwner && (
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={handleDirectMessage} title="Send Message">
+              <Send className="h-4 w-4" />
+            </Button>
+            <ConnectButton userId={post.user_id} currentUserId={currentUserId} />
+          </div>
+        )}
         {isOwner && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -180,7 +194,7 @@ export const PostCard = ({ post, currentUserId, userLiked, userSaved, onUpdate }
           <div className="border rounded-lg p-4 bg-muted/30 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-lg flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
+                <MapPin className="h-5 w-5 text-accent" />
                 Travel Itinerary
               </h3>
               <Badge variant="secondary">Bookable</Badge>

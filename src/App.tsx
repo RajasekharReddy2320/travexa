@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import Welcome from "./pages/Welcome";
-import Wanderlust from "./pages/Wanderlust";
+import Explore from "./pages/Explore";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Onboarding from "./pages/Onboarding";
@@ -15,21 +15,16 @@ import Book from "./pages/Book";
 import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
 import CreateTrip from "./pages/CreateTrip";
-import Connections from "./pages/Connections";
 import SearchUsers from "./pages/SearchUsers";
 import BookTransport from "./pages/BookTransport";
 import BookConfirm from "./pages/BookConfirm";
 import MyTickets from "./pages/MyTickets";
 import TicketDetails from "./pages/TicketDetails";
 import Cart from "./pages/Cart";
-import Messages from "./pages/Messages";
 import TravelBuddies from "./pages/TravelBuddies";
-import PhotoVault from "./pages/PhotoVault";
-import Knowledge from "./pages/Knowledge";
 import NotFound from "./pages/NotFound";
 import TravelAgents from "./pages/TravelAgents";
 import LocalGuides from "./pages/LocalGuides";
-import TravelTinder from "./pages/TravelTinder";
 import PlannerV2 from "./pages/PlannerV2";
 
 const queryClient = new QueryClient();
@@ -42,7 +37,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Wanderlust />} />
+            <Route path="/" element={<Explore />} />
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
@@ -52,22 +47,15 @@ const App = () => (
             <Route path="/create-trip" element={<CreateTrip />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:userId" element={<UserProfile />} />
-            <Route path="/connections" element={<Connections />} />
             <Route path="/search" element={<SearchUsers />} />
             <Route path="/book-transport" element={<BookTransport />} />
             <Route path="/ticket-details" element={<TicketDetails />} />
             <Route path="/cart" element={<Cart />} />
-            <Route path="/messages" element={<Messages />} />
             <Route path="/travel-buddies" element={<TravelBuddies />} />
-            <Route path="/travel-tinder" element={<TravelTinder />} />
-            <Route path="/photo-vault" element={<PhotoVault />} />
-            <Route path="/knowledge" element={<Knowledge />} />
-            <Route path="/profile/:userId" element={<UserProfile />} />
             <Route path="/book" element={<Book />} />
             <Route path="/travel-agents" element={<TravelAgents />} />
             <Route path="/local-guides" element={<LocalGuides />} />
             <Route path="/planner-v2" element={<PlannerV2 />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
