@@ -9,16 +9,18 @@ const corsHeaders = {
 
 // Security: Input validation schema
 const itineraryRequestSchema = z.object({
+  currentLocation: z.string().trim().min(2).max(100).optional(),
   destination: z.string().trim().min(2).max(100),
   startDate: z.string().refine((d) => !isNaN(Date.parse(d)), 'Invalid start date'),
   endDate: z.string().refine((d) => !isNaN(Date.parse(d)), 'Invalid end date'),
   budgetINR: z.number().positive().max(10000000).optional().nullable(),
-  groupSize: z.number().int().min(1).max(50),
+  budget: z.string().optional(),
+  groupSize: z.number().int().min(1).max(50).optional(),
+  travelers: z.number().int().min(1).max(50).optional(),
   interests: z.array(z.string().max(50)).max(20),
   plannerMode: z.enum(['comfort', 'time', 'budget']).optional(),
   aiModel: z.enum(['gemini', 'gpt5', 'gpt5-mini']).optional(),
-  regenerateDay: z.number().optional(),
-  existingItinerary: z.any().optional()
+  generateMultiple: z.boolean().optional()
 });
 
 serve(async (req) => {
@@ -41,7 +43,23 @@ serve(async (req) => {
       );
     }
 
-    const { destination, startDate, endDate, budgetINR, groupSize, interests, plannerMode, aiModel = 'gemini', regenerateDay, existingItinerary } = validation.data;
+    const { 
+      currentLocation, 
+      destination, 
+      startDate, 
+      endDate, 
+      budgetINR, 
+      budget,
+      groupSize, 
+      travelers,
+      interests, 
+      plannerMode, 
+      aiModel = 'gemini',
+      generateMultiple = true
+    } = validation.data;
+    
+    const actualGroupSize = groupSize || travelers || 1;
+    const actualBudget = budget || (budgetINR ? `₹${budgetINR}` : 'Flexible');
     
     // Security: Validate date logic
     const start = new Date(startDate);
@@ -53,7 +71,7 @@ serve(async (req) => {
       );
     }
 
-    const tripDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const tripDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     if (tripDays > 60) {
       return new Response(
         JSON.stringify({ error: 'Trip duration cannot exceed 60 days' }),
@@ -61,146 +79,116 @@ serve(async (req) => {
       );
     }
 
-    // Security: Minimal logging without PII
     console.log('[Itinerary Request]', {
       destination,
       duration_days: tripDays,
+      generateMultiple,
       timestamp: new Date().toISOString()
     });
 
-    // Check for required API keys based on model selection
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     
-    if (aiModel === 'gemini' && !LOVABLE_API_KEY) {
+    if (!LOVABLE_API_KEY) {
       console.error('[Config Error] LOVABLE_API_KEY not configured');
       return new Response(
         JSON.stringify({ error: 'Lovable AI not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    if ((aiModel === 'gpt5' || aiModel === 'gpt5-mini') && !OPENAI_API_KEY) {
-      console.error('[Config Error] OPENAI_API_KEY not configured');
-      return new Response(
-        JSON.stringify({ error: 'OpenAI API key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
     // Construct system prompt based on planner mode
-    let systemPrompt = "You are a helpful travel planning assistant that creates detailed itineraries.";
-    
+    let modeDescription = "balanced";
     if (plannerMode === 'comfort') {
-      systemPrompt += " Focus on premium experiences, relaxation, stress-free travel, luxury accommodations, and comfortable transportation. Prioritize quality over quantity.";
+      modeDescription = "comfort-focused with premium experiences, luxury stays, and relaxation";
     } else if (plannerMode === 'time') {
-      systemPrompt += " Optimize for efficient scheduling, short travel times between locations, and maximum experiences per day. Create a packed but realistic itinerary.";
+      modeDescription = "time-optimized with efficient scheduling and maximum activities";
     } else if (plannerMode === 'budget') {
-      systemPrompt += " Focus on cost-effective options, budget accommodations, free or cheap activities, local transportation, and money-saving tips.";
+      modeDescription = "budget-friendly with cost-effective options and money-saving tips";
     }
+
+    const systemPrompt = `You are a travel planning AI that creates detailed, bookable trip itineraries in JSON format.
+Return ONLY valid JSON with no additional text. The response must be a valid JSON object.
+All costs should be in INR (Indian Rupees).`;
+
+    const itineraryCount = generateMultiple ? 4 : 1;
     
-    systemPrompt += " Always provide costs in INR (Indian Rupees). CRITICAL: Return ONLY a valid JSON object (no markdown, no code blocks) with this EXACT structure: {\"overview\": \"string description\", \"dailyPlan\": [{\"day\": 1, \"activities\": \"comma-separated string of activities\"}], \"estimatedCostINR\": number, \"tips\": \"string of tips\"}. The activities field MUST be a plain string, not an array or object.";
+    const userPrompt = `Create ${itineraryCount} DIFFERENT trip itinerary options for ${actualGroupSize} traveler(s) ${currentLocation ? `traveling from ${currentLocation} to ` : 'visiting '}${destination}.
 
-    let prompt;
-    if (regenerateDay && existingItinerary) {
-      prompt = `Regenerate ONLY Day ${regenerateDay} of this travel itinerary:
+Trip Details:
+- ${currentLocation ? `Departure: ${currentLocation}` : 'No departure city specified'}
 - Destination: ${destination}
-- Dates: ${startDate} to ${endDate}
-- Budget: ${budgetINR ? `₹${budgetINR}` : 'Flexible'}
-- Group Size: ${groupSize} ${groupSize === 1 ? 'person' : 'people'}
-- Interests: ${interests.join(', ')}
-- Planner Mode: ${plannerMode || 'balanced'}
+- Dates: ${startDate} to ${endDate} (${tripDays} days)
+- Budget: ${actualBudget}
+- Interests: ${interests.join(", ")}
+- Planning Style: ${modeDescription}
 
-Current Day ${regenerateDay} activities: ${existingItinerary.dailyPlan?.find((d: any) => d.day === regenerateDay)?.activities || 'None'}
+${itineraryCount > 1 ? `Generate ${itineraryCount} DISTINCT itinerary options with different themes:
+1. "Classic Explorer" - Popular attractions and must-see spots
+2. "Hidden Gems" - Off-the-beaten-path experiences and local secrets
+3. "Adventure Seeker" - Active and adventurous activities
+4. "Relaxed Retreat" - Leisurely pace with comfort focus
 
-Provide a COMPLETE new itinerary with all days, but focus on making Day ${regenerateDay} different and more interesting. Return ONLY valid JSON with structure: {\"overview\": \"string\", \"dailyPlan\": [{\"day\": number, \"activities\": \"string\"}], \"estimatedCostINR\": number, \"tips\": \"string\"}. No markdown, no code blocks.`;
-    } else {
-      prompt = `Create a detailed travel itinerary for:
-- Destination: ${destination}
-- Dates: ${startDate} to ${endDate}
-- Budget: ${budgetINR ? `₹${budgetINR}` : 'Flexible'}
-- Group Size: ${groupSize} ${groupSize === 1 ? 'person' : 'people'}
-- Interests: ${interests.join(', ')}
-- Planner Mode: ${plannerMode || 'balanced'}
+Each itinerary should feel genuinely different, not just reordered activities.` : 'Generate one comprehensive itinerary.'}
 
-Provide a day-by-day breakdown with activities, estimated costs in INR, and travel tips. Return ONLY valid JSON with this EXACT structure: {\"overview\": \"string description\", \"dailyPlan\": [{\"day\": 1, \"activities\": \"Morning: activity 1, Afternoon: activity 2, Evening: activity 3\"}], \"estimatedCostINR\": number, \"tips\": \"string tips\"}. Activities MUST be a descriptive string, not an array or object. No markdown, no code blocks.`;
+${currentLocation ? `IMPORTANT: Include transport from ${currentLocation} to ${destination} as the first step and return transport as the last step.` : ''}
+
+Return a JSON object with this structure:
+{
+  "itineraries": [
+    {
+      "id": "unique-id",
+      "title": "Itinerary Theme Title",
+      "subtitle": "Brief tagline",
+      "reason": "Why this itinerary is great (1-2 sentences)",
+      "estimatedTotalCost": 50000,
+      "steps": [
+        {
+          "id": "step-unique-id",
+          "day": 1,
+          "time": "09:00",
+          "title": "Activity title",
+          "description": "Brief description (1-2 sentences)",
+          "location": "Specific location name in ${destination}",
+          "duration": "2 hours",
+          "category": "activity",
+          "isBookable": true,
+          "estimatedCost": 2000
+        }
+      ]
     }
+  ]
+}
 
-    let response;
-    let apiUrl;
-    let headers;
-    let requestBody: any;
+Categories must be: transport, accommodation, activity, food, sightseeing
+Include 4-6 steps per day with realistic INR costs.
+Each step must have a unique id (use format: itinerary-index-day-step, e.g., "1-d1-s1").`;
 
-    if (aiModel === 'gemini') {
-      apiUrl = 'https://ai.gateway.lovable.dev/v1/chat/completions';
-      headers = {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      };
-      requestBody = {
-        model: 'google/gemini-2.5-flash',
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
         ],
-      };
-    } else {
-      // OpenAI GPT-5 models
-      apiUrl = 'https://api.openai.com/v1/chat/completions';
-      headers = {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      };
-      requestBody = {
-        model: aiModel === 'gpt5' ? 'gpt-5-2025-08-07' : 'gpt-5-mini-2025-08-07',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
-        ],
-        max_completion_tokens: 4000,
-      };
-    }
-
-    response = await fetch(apiUrl, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestBody),
+      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[AI API Error]', {
         status: response.status,
-        model: aiModel,
         error: errorText,
         timestamp: new Date().toISOString()
       });
       
       if (response.status === 429) {
-        const serviceName = aiModel === 'gemini' ? 'Lovable AI' : 'OpenAI';
-        
-        // Check if it's an OpenAI quota issue
-        const isQuotaIssue = errorText.includes('insufficient_quota') || errorText.includes('exceeded your current quota');
-        
-        if (isQuotaIssue && aiModel !== 'gemini') {
-          return new Response(
-            JSON.stringify({ 
-              error: `OpenAI account has no credits. Please use Google Gemini instead (free) or add credits to your OpenAI account.`,
-              suggestModel: 'gemini'
-            }),
-            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        
-        const suggestion = aiModel !== 'gemini' 
-          ? ' Try using Google Gemini model instead (free), or wait a few minutes before retrying.'
-          : ' Please wait a few minutes before trying again.';
-        
         return new Response(
-          JSON.stringify({ 
-            error: `${serviceName} rate limit exceeded.${suggestion}`,
-            suggestModel: aiModel !== 'gemini' ? 'gemini' : undefined
-          }),
+          JSON.stringify({ error: 'Rate limit exceeded. Please wait a few minutes before trying again.' }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -212,23 +200,8 @@ Provide a day-by-day breakdown with activities, estimated costs in INR, and trav
         );
       }
       
-      if (response.status === 401) {
-        const serviceName = aiModel === 'gemini' ? 'Lovable AI' : 'OpenAI';
-        return new Response(
-          JSON.stringify({ 
-            error: `${serviceName} authentication failed. Please check your API key configuration.`,
-            suggestModel: aiModel !== 'gemini' ? 'gemini' : undefined
-          }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
       return new Response(
-        JSON.stringify({ 
-          error: `Failed to generate itinerary. Please try again or switch to a different AI model.`,
-          details: errorText,
-          suggestModel: aiModel !== 'gemini' ? 'gemini' : undefined
-        }),
+        JSON.stringify({ error: 'Failed to generate itinerary. Please try again.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -236,49 +209,36 @@ Provide a day-by-day breakdown with activities, estimated costs in INR, and trav
     const data = await response.json();
     console.log('[AI Response] Itinerary generated successfully');
     
-    let itinerary = data.choices[0].message.content;
+    let content = data.choices[0].message.content;
     
     // Clean up the response - remove any markdown formatting
-    itinerary = itinerary.trim();
-    if (itinerary.includes('```json')) {
-      itinerary = itinerary.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    content = content.trim();
+    if (content.includes('```json')) {
+      content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
     }
-    if (itinerary.includes('```')) {
-      itinerary = itinerary.replace(/```\n?/g, '');
+    if (content.includes('```')) {
+      content = content.replace(/```\n?/g, '');
     }
-    
-    // Remove any leading/trailing whitespace and newlines
-    itinerary = itinerary.trim();
+    content = content.trim();
     
     // Parse to validate JSON
-    const parsedItinerary = JSON.parse(itinerary);
+    const parsedResponse = JSON.parse(content);
     
     // Validate the structure
-    if (!parsedItinerary.dailyPlan || !Array.isArray(parsedItinerary.dailyPlan)) {
-      throw new Error('Invalid itinerary format: missing dailyPlan array');
+    if (!parsedResponse.itineraries || !Array.isArray(parsedResponse.itineraries)) {
+      throw new Error('Invalid itinerary format: missing itineraries array');
     }
     
-    // Ensure activities are strings
-    parsedItinerary.dailyPlan = parsedItinerary.dailyPlan.map((day: any, index: number) => ({
-      day: typeof day.day === 'number' ? day.day : index + 1,
-      activities: typeof day.activities === 'string' 
-        ? day.activities 
-        : Array.isArray(day.activities)
-        ? day.activities.join(', ')
-        : JSON.stringify(day.activities)
-    }));
-    
-    console.log('[Validation] Itinerary structure validated and normalized');
+    console.log('[Validation] Generated', parsedResponse.itineraries.length, 'itineraries');
 
     return new Response(
-      JSON.stringify({ itinerary: parsedItinerary }),
+      JSON.stringify(parsedResponse),
       { 
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   } catch (error: any) {
-    // Security: Generic error message to client
     console.error('[Server Error]', {
       message: error.message,
       timestamp: new Date().toISOString()
