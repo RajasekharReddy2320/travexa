@@ -185,10 +185,7 @@ const PlannerV2 = () => {
               </div>
 
               {/* Interactive Map with all stops */}
-              <ItineraryMap 
-                steps={tripData.steps} 
-                destination={tripDestination}
-              />
+              <ItineraryMap steps={tripData.steps} />
 
               {/* Timeline Connector Line (Visual) */}
               <div className="relative">
