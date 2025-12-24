@@ -187,8 +187,7 @@ const PlannerV2 = () => {
               {/* Interactive Map with all stops */}
               <ItineraryMap 
                 steps={tripData.steps} 
-                destination={tripDestination} 
-                origin={currentLocation}
+                destination={tripDestination}
               />
 
               {/* Timeline Connector Line (Visual) */}
