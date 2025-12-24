@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import InputForm from "@/components/planner/InputForm";
 import ItineraryCard from "@/components/planner/ItineraryCard";
 import ItineraryMap from "@/components/planner/ItineraryMap";
 import PlannerCart from "@/components/planner/PlannerCart";
 import { TripParams, TripResponse, ItineraryStep, CartItem } from "@/types/tripPlanner";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertCircle, Sparkles, PlusCircle } from 'lucide-react';
+import { AlertCircle, Sparkles, PlusCircle, Plane, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-
+import { useCart } from '@/contexts/CartContext';
 const PlannerV2 = () => {
+  const navigate = useNavigate();
+  const { addToCart: addToGlobalCart } = useCart();
   const [tripData, setTripData] = useState<TripResponse | null>(null);
   const [tripDestination, setTripDestination] = useState<string>('');
   const [currentLocation, setCurrentLocation] = useState<string>('');
@@ -18,6 +21,29 @@ const PlannerV2 = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { toast } = useToast();
+
+  const handleProceedToCheckout = () => {
+    // Add all planner cart items to global cart
+    cartItems.forEach(item => {
+      addToGlobalCart({
+        id: item.id,
+        booking_type: item.category === 'transport' ? 'flight' : 'bus',
+        service_name: item.title,
+        service_number: `PLN-${item.id.slice(0, 6).toUpperCase()}`,
+        from_location: currentLocation || 'Origin',
+        to_location: item.location,
+        departure_date: new Date().toISOString().split('T')[0],
+        departure_time: item.time,
+        arrival_time: item.time,
+        duration: item.duration || '1h',
+        price_inr: item.estimatedCost || 0,
+        passenger_name: '',
+        passenger_email: '',
+        passenger_phone: '',
+      });
+    });
+    navigate('/cart');
+  };
 
   const handlePlanTrip = async (params: TripParams) => {
     setIsLoading(true);
@@ -90,6 +116,21 @@ const PlannerV2 = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft size={20} />
+            </Button>
+            <div className="flex items-center gap-2">
+              <Plane className="text-primary" size={24} />
+              <h1 className="text-xl font-bold">Trip Planner</h1>
+            </div>
+          </div>
+        </div>
+      </header>
+
       <main className="pb-20">
         <div className="max-w-5xl mx-auto px-6 py-10">
           {/* Intro Text */}
@@ -183,6 +224,7 @@ const PlannerV2 = () => {
         onRemove={handleRemoveFromCart}
         isOpen={isCartOpen}
         setIsOpen={setIsCartOpen}
+        currentLocation={currentLocation}
       />
     </div>
   );
