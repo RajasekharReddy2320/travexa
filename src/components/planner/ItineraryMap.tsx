@@ -10,43 +10,76 @@ interface ItineraryMapProps {
 }
 
 const ItineraryMap: React.FC<ItineraryMapProps> = ({ steps, destination, origin }) => {
-  // Build waypoints from steps in chronological order (sorted by day and time)
+  // Build waypoints from ALL steps in chronological order (sorted by day and time)
   const sortedSteps = [...steps].sort((a, b) => {
     if (a.day !== b.day) return a.day - b.day;
     return a.time.localeCompare(b.time);
   });
 
-  // Get unique locations for hotels, restaurants, and key spots
-  const waypoints = sortedSteps
-    .filter(step => 
-      step.category === 'accommodation' || 
-      step.category === 'food' || 
-      step.category === 'sightseeing' ||
-      step.category === 'activity'
-    )
-    .map(step => step.location);
-
-  // Build Google Maps directions URL with waypoints
-  const buildMapsUrl = () => {
-    const encodedOrigin = encodeURIComponent(origin || destination);
-    const encodedDestination = encodeURIComponent(destination);
+  // Build ordered list of all stops: origin -> all locations in order -> final destination
+  const buildOrderedStops = () => {
+    const stops: { label: string; location: string; category: string }[] = [];
     
-    if (waypoints.length === 0) {
-      return `https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${encodedOrigin}&destination=${encodedDestination}&mode=driving`;
+    // Start with origin (airport/station)
+    if (origin) {
+      stops.push({ label: 'Start', location: origin, category: 'origin' });
     }
-
-    // Take up to 8 waypoints (Google Maps embed limit) in order
-    const limitedWaypoints = waypoints.slice(0, 8);
-    const waypointsParam = limitedWaypoints.map(w => encodeURIComponent(w)).join('|');
     
-    return `https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${encodedOrigin}&destination=${encodedDestination}&waypoints=${waypointsParam}&mode=driving`;
+    // Add all itinerary steps in chronological order
+    sortedSteps.forEach(step => {
+      // Include all meaningful categories
+      if (['accommodation', 'food', 'sightseeing', 'activity', 'transport'].includes(step.category)) {
+        stops.push({ 
+          label: step.title, 
+          location: step.location, 
+          category: step.category 
+        });
+      }
+    });
+    
+    return stops;
   };
 
-  // Fallback to simple place embed if API key doesn't work
-  const simpleMapsUrl = () => {
-    const allLocations = [origin, ...waypoints.slice(0, 5), destination].filter(Boolean);
-    const query = allLocations.join(' to ');
-    return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+  const orderedStops = buildOrderedStops();
+  
+  // Extract just locations for the map URL
+  const allLocations = orderedStops.map(stop => stop.location);
+
+  // Build Google Maps directions URL with all waypoints
+  const buildMapsUrl = () => {
+    if (allLocations.length < 2) {
+      return `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d15000!2d0!3d0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sin!4v1`;
+    }
+
+    const start = allLocations[0];
+    const end = allLocations[allLocations.length - 1];
+    const waypoints = allLocations.slice(1, -1);
+    
+    // Build the dir URL format: /dir/origin/waypoint1/waypoint2/.../destination
+    const locations = [start, ...waypoints, end].map(loc => encodeURIComponent(loc)).join('/');
+    
+    return `https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d500000!2d77.5946!3d12.9716!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m5!1s${encodeURIComponent(start)}!2s${encodeURIComponent(start)}!3m2!1d0!2d0!4m5!1s${encodeURIComponent(end)}!2s${encodeURIComponent(end)}!3m2!1d0!2d0!5e0!3m2!1sen!2sin`;
+  };
+
+  // Use directions URL with all stops
+  const directionsUrl = () => {
+    if (allLocations.length === 0) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(destination)}&output=embed`;
+    }
+    
+    // Build a proper directions URL with all stops
+    const start = allLocations[0];
+    const end = allLocations[allLocations.length - 1];
+    const waypoints = allLocations.slice(1, -1);
+    
+    let url = `https://www.google.com/maps/dir/${encodeURIComponent(start)}`;
+    waypoints.forEach(wp => {
+      url += `/${encodeURIComponent(wp)}`;
+    });
+    url += `/${encodeURIComponent(end)}`;
+    url += `?output=embed`;
+    
+    return url;
   };
 
   return (
@@ -54,20 +87,20 @@ const ItineraryMap: React.FC<ItineraryMapProps> = ({ steps, destination, origin 
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <MapPin size={20} className="text-primary" />
-          Route Overview - {origin} → {destination}
+          Route Overview - {allLocations.length} Stops
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="rounded-xl overflow-hidden">
           <iframe
-            src={simpleMapsUrl()}
+            src={directionsUrl()}
             width="100%"
-            height="350"
+            height="400"
             style={{ border: 0 }}
             allowFullScreen
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            title={`Route from ${origin} to ${destination}`}
+            title={`Route with ${allLocations.length} stops`}
             className="rounded-xl"
           />
         </div>
@@ -76,28 +109,24 @@ const ItineraryMap: React.FC<ItineraryMapProps> = ({ steps, destination, origin 
         <div className="mt-4">
           <p className="text-sm font-medium text-muted-foreground mb-2">Stops in order:</p>
           <div className="flex flex-wrap gap-2">
-            <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
-              1. {origin || 'Start'}
-            </span>
-            {sortedSteps
-              .filter(step => 
-                step.category === 'accommodation' || 
-                step.category === 'food' ||
-                step.category === 'sightseeing' ||
-                step.category === 'activity'
-              )
-              .slice(0, 8)
-              .map((step, index) => (
-                <span
-                  key={step.id}
-                  className="bg-muted px-3 py-1 rounded-full text-xs font-medium"
-                >
-                  {index + 2}. {step.title} ({step.location})
-                </span>
-              ))}
-            <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
-              {waypoints.length + 2}. {destination}
-            </span>
+            {orderedStops.map((stop, index) => (
+              <span
+                key={`${stop.location}-${index}`}
+                className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  stop.category === 'origin' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : stop.category === 'accommodation'
+                    ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                    : stop.category === 'food'
+                    ? 'bg-orange-500/20 text-orange-700 dark:text-orange-300'
+                    : stop.category === 'sightseeing'
+                    ? 'bg-green-500/20 text-green-700 dark:text-green-300'
+                    : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {String.fromCharCode(65 + index)}. {stop.label}
+              </span>
+            ))}
           </div>
         </div>
       </CardContent>

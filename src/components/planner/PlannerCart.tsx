@@ -1,20 +1,49 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CartItem } from '@/types/tripPlanner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ShoppingCart, Trash2, IndianRupee } from 'lucide-react';
+import { useCart } from '@/contexts/CartContext';
 
 interface PlannerCartProps {
   items: CartItem[];
   onRemove: (id: string) => void;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  currentLocation?: string;
 }
 
-const PlannerCart: React.FC<PlannerCartProps> = ({ items, onRemove, isOpen, setIsOpen }) => {
+const PlannerCart: React.FC<PlannerCartProps> = ({ items, onRemove, isOpen, setIsOpen, currentLocation = '' }) => {
+  const navigate = useNavigate();
+  const { addToCart: addToGlobalCart } = useCart();
   const totalCost = items.reduce((sum, item) => sum + (item.estimatedCost || 0), 0);
+
+  const handleProceedToCheckout = () => {
+    // Add all planner cart items to global cart
+    items.forEach(item => {
+      addToGlobalCart({
+        id: item.id,
+        booking_type: item.category === 'transport' ? 'flight' : 'bus',
+        service_name: item.title,
+        service_number: `PLN-${item.id.slice(0, 6).toUpperCase()}`,
+        from_location: currentLocation || 'Origin',
+        to_location: item.location,
+        departure_date: new Date().toISOString().split('T')[0],
+        departure_time: item.time,
+        arrival_time: item.time,
+        duration: item.duration || '1h',
+        price_inr: item.estimatedCost || 0,
+        passenger_name: '',
+        passenger_email: '',
+        passenger_phone: '',
+      });
+    });
+    setIsOpen(false);
+    navigate('/cart');
+  };
 
   return (
     <>
@@ -97,8 +126,8 @@ const PlannerCart: React.FC<PlannerCartProps> = ({ items, onRemove, isOpen, setI
                     {totalCost.toLocaleString()}
                   </span>
                 </div>
-                <Button className="w-full" size="lg">
-                  Proceed to Booking
+                <Button className="w-full" size="lg" onClick={handleProceedToCheckout}>
+                  Proceed to Checkout
                 </Button>
               </div>
             </>
