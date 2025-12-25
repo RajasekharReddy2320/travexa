@@ -1,18 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
 import FeaturedTrips from "@/components/FeaturedTrips";
-import { Plane } from "lucide-react";
+import { Plane, Sparkles, MapPin, Users, Ticket, Zap, Shield, Globe } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Check if user is authenticated and redirect to Wanderlust
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/");
@@ -28,22 +28,87 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setMousePosition({
+        x: ((e.clientX - rect.left) / rect.width) * 100,
+        y: ((e.clientY - rect.top) / rect.height) * 100,
+      });
+    }
+  };
+
+  const features = [
+    { icon: Sparkles, title: "AI-Powered Planning", description: "Get personalized itineraries crafted by advanced AI based on your preferences, budget, and travel style.", emoji: "🤖" },
+    { icon: Ticket, title: "Unified Booking", description: "Book flights, trains, buses, hotels, and cabs all in one place with the best prices guaranteed.", emoji: "🎫" },
+    { icon: Shield, title: "Best Price Guarantee", description: "Our algorithms scan hundreds of options to find you unbeatable deals and exclusive discounts.", emoji: "💰" },
+    { icon: Users, title: "Social Travel Network", description: "Connect with fellow travelers, share experiences, and find travel buddies for your next adventure.", emoji: "👥" },
+    { icon: Globe, title: "All-in-One Dashboard", description: "Manage bookings, itineraries, and documents in one intuitive dashboard with offline access.", emoji: "📱" },
+    { icon: Zap, title: "Lightning Fast Search", description: "Get instant results from thousands of routes and operators in seconds.", emoji: "⚡" },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
+    <div 
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      className="min-h-screen bg-background relative overflow-hidden"
+    >
+      {/* Animated Background Gradient */}
+      <div 
+        className="pointer-events-none fixed inset-0 z-0 transition-all duration-500 ease-out"
+        style={{
+          background: `
+            radial-gradient(600px circle at ${mousePosition.x}% ${mousePosition.y}%, 
+              hsl(210 50% 50% / 0.15), 
+              transparent 40%),
+            radial-gradient(800px circle at ${100 - mousePosition.x}% ${100 - mousePosition.y}%, 
+              hsl(280 50% 50% / 0.1), 
+              transparent 40%),
+            radial-gradient(400px circle at ${mousePosition.x + 20}% ${mousePosition.y + 30}%, 
+              hsl(150 50% 50% / 0.08), 
+              transparent 40%)
+          `
+        }}
+      />
+      
+      {/* Floating Orbs */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div 
+          className="absolute w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse"
+          style={{
+            background: 'radial-gradient(circle, hsl(210 50% 50%), transparent)',
+            left: `${mousePosition.x * 0.5}%`,
+            top: `${mousePosition.y * 0.3}%`,
+            transition: 'left 0.8s ease-out, top 0.8s ease-out',
+          }}
+        />
+        <div 
+          className="absolute w-72 h-72 rounded-full blur-3xl opacity-15"
+          style={{
+            background: 'radial-gradient(circle, hsl(280 50% 60%), transparent)',
+            right: `${(100 - mousePosition.x) * 0.4}%`,
+            bottom: `${(100 - mousePosition.y) * 0.4}%`,
+            transition: 'right 1s ease-out, bottom 1s ease-out',
+          }}
+        />
+      </div>
+
       {/* Header */}
-      <header className="bg-card/50 backdrop-blur-sm border-b border-border sticky top-0 z-50">
+      <header className="relative z-50 border-b border-border/50 bg-background/60 backdrop-blur-xl sticky top-0">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center max-w-6xl">
           <Link to="/" className="flex items-center gap-2 group">
-            <Plane className="h-6 w-6 text-primary transition-transform group-hover:rotate-12" />
+            <div className="p-2 bg-primary/10 backdrop-blur-sm rounded-xl border border-primary/20 group-hover:bg-primary/20 transition-all">
+              <Plane className="h-6 w-6 text-primary transition-transform group-hover:rotate-12" />
+            </div>
             <h1 className="text-xl font-bold tracking-tight">
-              Trave<span className="text-primary">X</span>a
+              Trave<span className="text-accent">X</span>a
             </h1>
           </Link>
           <div className="flex gap-3">
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size="sm" className="backdrop-blur-sm" asChild>
               <Link to="/login">Login</Link>
             </Button>
-            <Button size="sm" asChild>
+            <Button size="sm" className="shadow-lg shadow-primary/20" asChild>
               <Link to="/signup">Sign Up</Link>
             </Button>
           </div>
@@ -51,117 +116,94 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main>
+      <main className="relative z-10">
         {/* Hero Section */}
-        <section className="container mx-auto px-6 py-16 md:py-24 max-w-4xl text-center">
-          <div className="mb-8 flex justify-center">
+        <section className="container mx-auto px-6 py-20 md:py-32 max-w-4xl text-center">
+          <div className="mb-10 flex justify-center">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl"></div>
-              <div className="relative">
-                <Plane className="h-24 w-24 text-primary" />
+              <div className="absolute inset-0 bg-accent/30 rounded-full blur-3xl scale-150 animate-pulse"></div>
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl scale-125"></div>
+              <div className="relative p-6 bg-background/50 backdrop-blur-xl rounded-3xl border border-border/50 shadow-2xl">
+                <Plane className="h-20 w-20 text-primary animate-[bounce_3s_ease-in-out_infinite]" />
               </div>
             </div>
           </div>
 
-          <div className="mb-6">
-            <Badge variant="secondary" className="mb-4">
+          <div className="mb-8">
+            <Badge 
+              variant="secondary" 
+              className="mb-6 px-4 py-2 text-sm bg-background/60 backdrop-blur-xl border border-border/50 shadow-lg"
+            >
+              <Sparkles className="h-4 w-4 mr-2 text-accent" />
               Welcome to Travexa
             </Badge>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              Your <span className="text-primary">AI-Powered</span> Travel Companion
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight">
+              Your{' '}
+              <span className="relative">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent via-primary to-accent animate-gradient">
+                  AI-Powered
+                </span>
+                <span className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-accent via-primary to-accent rounded-full opacity-50"></span>
+              </span>
+              <br />
+              Travel Companion
             </h1>
           </div>
 
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            Plan trips with AI assistance, connect with fellow travelers, and manage all your bookings in one place.
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+            Plan trips with AI assistance, connect with fellow travelers, and manage all your bookings in one beautiful place.
           </p>
 
-          <Button size="lg" asChild className="px-8">
-            <Link to="/signup">Get Started Free</Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" className="px-10 py-6 text-lg shadow-2xl shadow-primary/30 hover:shadow-primary/50 transition-all hover:scale-105" asChild>
+              <Link to="/signup">
+                <Sparkles className="mr-2 h-5 w-5" />
+                Get Started Free
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" className="px-10 py-6 text-lg bg-background/50 backdrop-blur-xl border-border/50 hover:bg-background/80" asChild>
+              <Link to="/welcome">Learn More</Link>
+            </Button>
+          </div>
         </section>
 
-        {/* Why Choose Travexa Section */}
-        <section className="container mx-auto px-6 py-16 max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Choose Travexa?</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+        {/* Features Section */}
+        <section className="container mx-auto px-6 py-20 max-w-6xl">
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-4 bg-background/60 backdrop-blur-xl border border-border/50">
+              Features
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">Why Choose Travexa?</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
               Your all-in-one travel companion that revolutionizes how you plan, book, and experience your journeys
             </p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="group relative overflow-hidden transition-all duration-300 hover:scale-105">
-              <div className="p-6 backdrop-blur-sm bg-card/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300">
-                <div className="text-4xl mb-4 transition-transform duration-300 group-hover:scale-110">🤖</div>
-                <h3 className="text-xl font-semibold mb-3 transition-all duration-300 group-hover:text-primary">
-                  <span className="inline-block transition-all duration-300 group-hover:scale-110">AI-Powered Planning</span>
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Our advanced AI creates personalized itineraries tailored to your preferences, budget, and travel style. Get instant recommendations for destinations, activities, and hidden gems.
-                </p>
-              </div>
-            </div>
-
-            <div className="group relative overflow-hidden transition-all duration-300 hover:scale-105">
-              <div className="p-6 backdrop-blur-sm bg-card/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300">
-                <div className="text-4xl mb-4 transition-transform duration-300 group-hover:scale-110">🎫</div>
-                <h3 className="text-xl font-semibold mb-3 transition-all duration-300 group-hover:text-primary">
-                  <span className="inline-block transition-all duration-300 group-hover:scale-110">Unified Booking</span>
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Book flights, trains, and buses from multiple providers in one place. Compare prices, check availability, and secure the best deals without switching between different platforms.
-                </p>
-              </div>
-            </div>
-
-            <div className="group relative overflow-hidden transition-all duration-300 hover:scale-105">
-              <div className="p-6 backdrop-blur-sm bg-card/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300">
-                <div className="text-4xl mb-4 transition-transform duration-300 group-hover:scale-110">💰</div>
-                <h3 className="text-xl font-semibold mb-3 transition-all duration-300 group-hover:text-primary">
-                  <span className="inline-block transition-all duration-300 group-hover:scale-110">Best Price Guarantee</span>
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Our smart algorithms scan hundreds of options to find you the best prices. Save money with our exclusive deals and flexible booking options that fit your budget.
-                </p>
-              </div>
-            </div>
-
-            <div className="group relative overflow-hidden transition-all duration-300 hover:scale-105">
-              <div className="p-6 backdrop-blur-sm bg-card/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300">
-                <div className="text-4xl mb-4 transition-transform duration-300 group-hover:scale-110">👥</div>
-                <h3 className="text-xl font-semibold mb-3 transition-all duration-300 group-hover:text-primary">
-                  <span className="inline-block transition-all duration-300 group-hover:scale-110">Social Travel Network</span>
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Connect with fellow travelers, share experiences, and discover trips through our vibrant community. Find travel buddies and get inspired by real travelers' stories.
-                </p>
-              </div>
-            </div>
-
-            <div className="group relative overflow-hidden transition-all duration-300 hover:scale-105">
-              <div className="p-6 backdrop-blur-sm bg-card/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300">
-                <div className="text-4xl mb-4 transition-transform duration-300 group-hover:scale-110">📱</div>
-                <h3 className="text-xl font-semibold mb-3 transition-all duration-300 group-hover:text-primary">
-                  <span className="inline-block transition-all duration-300 group-hover:scale-110">All-in-One Dashboard</span>
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Manage all your bookings, itineraries, and travel documents in one intuitive dashboard. Access your tickets offline and get real-time updates on your journeys.
-                </p>
-              </div>
-            </div>
-
-            <div className="group relative overflow-hidden transition-all duration-300 hover:scale-105">
-              <div className="p-6 backdrop-blur-sm bg-card/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all duration-300">
-                <div className="text-4xl mb-4 transition-transform duration-300 group-hover:scale-110">⚡</div>
-                <h3 className="text-xl font-semibold mb-3 transition-all duration-300 group-hover:text-primary">
-                  <span className="inline-block transition-all duration-300 group-hover:scale-110">Lightning Fast Search</span>
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Get instant results from thousands of routes and operators. Our optimized search engine delivers comprehensive options in seconds, making booking effortless and efficient.
-                </p>
-              </div>
-            </div>
+            {features.map((feature, index) => (
+              <Card 
+                key={index}
+                className="group relative overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl bg-card/50 backdrop-blur-xl border-border/50"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                {/* Hover Glow Effect */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                  <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-primary/10" />
+                </div>
+                
+                <CardContent className="p-8 relative z-10">
+                  <div className="text-5xl mb-5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                    {feature.emoji}
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3 transition-colors duration-300 group-hover:text-accent">
+                    {feature.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </section>
 
@@ -169,37 +211,44 @@ const Index = () => {
         <FeaturedTrips />
 
         {/* Feedback Section */}
-        <section className="container mx-auto px-6 py-20 max-w-4xl">
-          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-            <CardHeader className="text-center">
-              <CardTitle className="text-3xl mb-4">We'd Love Your Feedback!</CardTitle>
+        <section className="container mx-auto px-6 py-24 max-w-4xl">
+          <Card className="relative overflow-hidden border-2 border-accent/20 bg-gradient-to-br from-accent/5 via-background to-primary/5 backdrop-blur-xl shadow-2xl">
+            {/* Decorative Elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+            
+            <CardHeader className="text-center relative z-10">
+              <Badge className="w-fit mx-auto mb-4 bg-accent/20 text-accent border-accent/30">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Feedback
+              </Badge>
+              <CardTitle className="text-3xl md:text-4xl mb-4">We'd Love Your Feedback!</CardTitle>
               <CardDescription className="text-base">
                 Travexa is currently in development. We're building a fully functional travel planning and booking platform.
               </CardDescription>
             </CardHeader>
-            <CardContent className="text-center space-y-4">
-              <p className="text-lg font-medium text-foreground">
+            <CardContent className="text-center space-y-6 relative z-10">
+              <p className="text-xl font-medium text-foreground">
                 Would you use Travexa if it were fully functional?
               </p>
-              <p className="text-muted-foreground">
-                Your feedback helps us understand what travelers need most. We're working hard to bring you features like AI-powered trip planning, social connections with fellow travelers, and seamless booking experiences.
+              <p className="text-muted-foreground max-w-lg mx-auto">
+                Your feedback helps us understand what travelers need most. We're working hard to bring you the best experience.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                <Button size="lg" className="px-8">
+                <Button size="lg" className="px-8 shadow-xl shadow-primary/20 hover:shadow-primary/40" asChild>
                   <Link to="/signup">Yes, Sign Me Up!</Link>
                 </Button>
-                <Button size="lg" variant="outline" className="px-8" asChild>
+                <Button size="lg" variant="outline" className="px-8 bg-background/50 backdrop-blur-sm" asChild>
                   <Link to="/signup">Maybe, Tell Me More</Link>
                 </Button>
               </div>
             </CardContent>
           </Card>
         </section>
-
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card/50 backdrop-blur-sm">
+      <footer className="relative z-10 border-t border-border/50 bg-background/60 backdrop-blur-xl">
         <div className="container mx-auto px-6 py-8 max-w-6xl">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
             <div className="text-center md:text-left">

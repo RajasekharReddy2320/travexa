@@ -120,10 +120,13 @@ export default function PlanTrip() {
       }
 
       if (data.itineraries && data.itineraries.length > 0) {
-        setItineraries(data.itineraries);
-        toast({
-          title: "Itineraries Generated!",
-          description: `${data.itineraries.length} unique trip options are ready for you to explore.`,
+        // Navigate to the Generated Itineraries page
+        navigate('/generated-itineraries', {
+          state: {
+            itineraries: data.itineraries,
+            currentLocation,
+            destination
+          }
         });
       } else {
         throw new Error("No itineraries generated");
